@@ -18,12 +18,12 @@ def authorize(token: Optional[str]):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
 def connect_mt5():
-    path = os.getenv("MT5_PATH") or None
+    path = os.getenv("MT5_PATH") or os.getenv("MT5_TERMINAL_PATH") or None
     login = int(os.getenv("MT5_LOGIN", "0"))
     password = os.getenv("MT5_PASSWORD", "")
     server = os.getenv("MT5_SERVER", "")
     if not login or not password or not server:
-        raise RuntimeError("MT5 demo credentials are not configured on the VPS")
+        raise RuntimeError("MT5 account settings are missing. Configure MT5_LOGIN, MT5_PASSWORD and MT5_SERVER for your broker on the VPS.")
     if not mt5.initialize(path, login=login, password=password, server=server):
         raise RuntimeError(f"MT5 initialize failed: {mt5.last_error()}")
     info = mt5.account_info()
@@ -38,7 +38,7 @@ def connect_mt5():
 
 @app.get("/health")
 def health():
-    return {"service": "BONAGO MT5 Engine", "utc": datetime.now(timezone.utc).isoformat(), "configured": bool(os.getenv("BOT_API_TOKEN"))}
+    return {"service": "BONAGO MT5 Engine", "utc": datetime.now(timezone.utc).isoformat(), "configured": bool(os.getenv("BOT_API_TOKEN") and os.getenv("MT5_LOGIN") and os.getenv("MT5_PASSWORD") and os.getenv("MT5_SERVER")), "broker_agnostic": True}
 
 @app.get("/account")
 def account(x_bot_token: Optional[str] = Header(default=None)):
@@ -47,7 +47,7 @@ def account(x_bot_token: Optional[str] = Header(default=None)):
         info = connect_mt5()
         data = {"login": info.login, "server": info.server, "currency": info.currency,
                 "balance": info.balance, "equity": info.equity, "profit": info.profit,
-                "mode": "DEMO"}
+                "mode": "DEMO", "broker": getattr(info, "company", ""), "name": getattr(info, "name", "")}
         mt5.shutdown()
         return data
     except Exception as exc:
