@@ -24,7 +24,7 @@ Official MT5 Python integration uses the installed desktop terminal. See https:/
 6. Put the API behind HTTPS (reverse proxy/VPN/firewall). Do not expose port 8000 publicly without TLS and access controls.
 
 ## Android
-Open this repository in Android Studio. Set the engine HTTPS URL and API token using a secure local configuration mechanism before connecting. Do not commit either value.
+Open this repository in Android Studio. Enter the deployed engine HTTPS URL and API token in the app, then tap **Connect and load account**. The app calls `/health`, `/account`, and `/bot/status`; the Start and Stop controls call the corresponding API endpoints. The token is kept in app memory for the current session and is not committed to source. Do not share it or use an unencrypted HTTP endpoint.
 
 ## Current API
 - `GET /health` — engine/terminal status
@@ -33,4 +33,4 @@ Open this repository in Android Studio. Set the engine HTTPS URL and API token u
 - `POST /bot/stop` — stops new entries
 - `GET /bot/status` — bot status
 
-The current engine is DEMO-ONLY and rejects non-demo accounts. Switching brokers is supported through VPS configuration, but the Android dashboard is not yet wired to submit broker credentials or control the engine end-to-end. This is a starter implementation, not a promise of profitability. Backtest and forward-test on demo before considering live use.
+The current engine is DEMO-ONLY and rejects non-demo accounts. Switching brokers is supported through VPS configuration, and the Android dashboard now has HTTPS API calls for account/status checks and guarded start/stop requests. The actual automated trading strategy and order execution are still not implemented; `/bot/start` intentionally returns HTTP 409 until a strategy is validated. This is a starter implementation, not a promise of profitability. Backtest and forward-test on demo before considering live use.
