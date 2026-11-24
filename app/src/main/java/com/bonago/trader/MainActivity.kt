@@ -99,20 +99,40 @@ fun BonagoDashboard() {
                             OutlinedTextField(engineUrl, { engineUrl = it }, label = { Text("Engine HTTPS URL") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                             OutlinedTextField(apiToken, { apiToken = it }, label = { Text("VPS API token") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                             Button(enabled = !busy, onClick = {
-                                perform("/health") { result ->
-                                    if (result.code in 200..299) {
-                                        status = "Engine reachable. Checking MT5 demo account…"
-                                        perform("/account") { accountResult ->
-                                            if (accountResult.code in 200..299) {
-                                                val json = JSONObject(accountResult.body)
-                                                account = "Broker: ${json.optString("broker")}\nServer: ${json.optString("server")}\nLogin: ${json.optLong("login")}\nCurrency: ${json.optString("currency")}\nBalance: ${json.optDouble("balance")}\nEquity: ${json.optDouble("equity")}\nMode: ${json.optString("mode")}"
-                                                status = "Connected to MT5 demo account"
-                                                perform("/bot/status") { sr ->
-                                                    if (sr.code in 200..299) botStatus = if (JSONObject(sr.body).optBoolean("running")) "Bot running" else "Bot stopped"
+                                if (engineUrl.isBlank() || apiToken.isBlank()) {
+                                    status = "Enter the HTTPS engine URL and API token first."
+                                } else if (!engineUrl.trim().startsWith("https://")) {
+                                    status = "Use a secure HTTPS engine URL."
+                                } else {
+                                    busy = true
+                                    scope.launch {
+                                        try {
+                                            val results = withContext(Dispatchers.IO) {
+                                                val health = apiCall(engineUrl, apiToken, "/health")
+                                                if (health.code !in 200..299) return@withContext listOf(health)
+                                                val acct = apiCall(engineUrl, apiToken, "/account")
+                                                if (acct.code !in 200..299) return@withContext listOf(health, acct)
+                                                val bot = apiCall(engineUrl, apiToken, "/bot/status")
+                                                listOf(health, acct, bot)
+                                            }
+                                            if (results[0].code !in 200..299) {
+                                                status = "Engine error (${results[0].code}): ${results[0].body}"
+                                            } else if (results.size < 2 || results[1].code !in 200..299) {
+                                                status = "Engine reached, but MT5 demo account check failed: ${results.last().body}"
+                                            } else {
+                                                val json = JSONObject(results[1].body)
+                                                account = "Broker: ${json.optString("broker")}\\nServer: ${json.optString("server")}\\nLogin: ${json.optLong("login")}\\nCurrency: ${json.optString("currency")}\\nBalance: ${json.optDouble("balance")}\\nEquity: ${json.optDouble("equity")}\\nMode: ${json.optString("mode")}"
+                                                if (results.size > 2 && results[2].code in 200..299) {
+                                                    botStatus = if (JSONObject(results[2].body).optBoolean("running")) "Bot running" else "Bot stopped"
                                                 }
-                                            } else status = "Engine reached, but MT5 account check failed: ${accountResult.body}"
+                                                status = "Connected to MT5 demo account"
+                                            }
+                                        } catch (e: Exception) {
+                                            status = e.message ?: "Connection failed"
+                                        } finally {
+                                            busy = false
                                         }
-                                    } else status = "Engine error (${result.code}): ${result.body}"
+                                    }
                                 }
                             }, modifier = Modifier.fillMaxWidth()) { Text(if (busy) "Connecting…" else "Connect and load account") }
                             Text(status, color = MaterialTheme.colorScheme.secondary)
