@@ -31,9 +31,9 @@ def connect_mt5():
         mt5.shutdown()
         raise RuntimeError("Unable to read MT5 account")
     # Fail closed: this starter must only run on a broker demo account.
-    if bool(getattr(info, "trade_mode", -1) == mt5.ACCOUNT_TRADE_MODE_REAL):
+    if getattr(info, "trade_mode", -1) != mt5.ACCOUNT_TRADE_MODE_DEMO:
         mt5.shutdown()
-        raise RuntimeError("LIVE account detected. This starter is DEMO-ONLY; execution blocked.")
+        raise RuntimeError("Non-demo account detected. This starter is DEMO-ONLY; execution blocked.")
     return info
 
 @app.get("/health")
