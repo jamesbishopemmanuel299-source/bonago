@@ -97,6 +97,10 @@ function renderAiDecision(d,checks){
  const action=d?.action||"ERROR",confidence=Number.isFinite(Number(d?.confidence))?Number(d.confidence):null;
  put("aiDecisionAction",action);put("aiDecisionConfidence",confidence===null?"—":confidence+"%");
  put("aiDecisionReason",d?.rationale||"No explanation was returned by Groq.");
+ const setupValues=[["aiEntryPrice",d?.entry_price],["aiStopLoss",d?.stop_loss],["aiTakeProfit",d?.take_profit]];
+ setupValues.forEach(([id,value])=>put(id,value!==null&&value!==undefined&&Number.isFinite(Number(value))?Number(value).toString():"—"));
+ put("aiTradeDirection",d?.action==="CALL"?"BUY / CALL":d?.action==="PUT"?"BUY / PUT":"WAIT / NO TRADE");
+ put("aiSetupNote",d?.setup_note||"No trade setup available.");
  put("aiDecisionRisks",Array.isArray(d?.risk_flags)&&d.risk_flags.length?d.risk_flags.join(" · "):"No AI risk flags returned.");
  const list=$("aiTradeChecks");if(list){list.replaceChildren();(checks||[]).forEach(item=>{const li=document.createElement("li");li.textContent=(item.ok?"PASS · ":"BLOCK · ")+item.label;li.style.color=item.ok?"#72ddb3":"#ff9ba8";list.append(li)})}
  const allowed=!!checks?.length&&checks.every(x=>x.ok);
