@@ -81,10 +81,14 @@
     <div><small>BOT STATUS</small><b id="tradeBotStatus">STOPPED</b></div>
   </div>
   <section class="panel market-chart-panel">
-    <div class="panelHead"><div><span class="eyebrow">LIVE DERIV CANDLESTICKS</span><h2 id="chartMarketName">Market chart</h2></div><span id="chartFeedStatus" class="subtle-pill">CONNECTING</span></div>
-    <div class="chart-toolbar"><div class="chart-price"><b id="chartCurrentPrice">—</b><small id="chartPriceChange">Waiting for price feed</small></div><div class="chart-timeframes"><button class="selected" data-chart-time="60">1m</button><button data-chart-time="300">5m</button><button data-chart-time="900">15m</button><button data-chart-time="3600">1h</button></div></div>
-    <div class="chart-canvas-wrap"><canvas id="marketChart" aria-label="Live market price chart"></canvas></div>
+    <div class="panelHead exchange-chart-head"><div><span class="eyebrow">DEMO MARKET · LIVE</span><h2 id="chartMarketName">Select a market</h2></div><span class="demo-chip">⇄ DEMO</span></div>
+    <div class="chart-toolbar"><div class="chart-price"><b id="chartCurrentPrice">—</b><small id="chartPriceChange">Waiting for price feed</small></div><span id="chartFeedStatus" class="subtle-pill">CONNECTING</span></div>
+    <div class="chart-timeframes"><button class="selected" data-chart-time="60">1m</button><button data-chart-time="300">5m</button><button data-chart-time="900">15m</button><button data-chart-time="1800">30m</button><button data-chart-time="3600">1h</button></div>
+    <div class="chart-indicator-label">CANDLESTICK CHART <span>⋮</span></div>
+    <div class="chart-canvas-wrap"><canvas id="marketChart" aria-label="Live market candlestick chart"></canvas></div>
+    <div class="rsi-panel"><div class="rsi-caption">RSI(14) <b id="rsiValue">—</b></div><canvas id="rsiChart" aria-label="Relative strength index indicator"></canvas></div>
     <div class="chart-legend"><span>● LIVE DERIV PRICES</span><span id="chartLastUpdated">Awaiting data</span></div>
+    <div class="exchange-orderbar"><div class="exchange-stake"><small>ORDER STAKE</small><b id="exchangeStakeValue">1.00</b><span id="exchangeCurrency">DEMO</span></div><button id="exchangeBuy" class="exchange-buy" disabled><small>BUY / CALL</small><b id="exchangeBuyPrice">—</b></button><button id="exchangeSell" class="exchange-sell" disabled><small>BUY / PUT</small><b id="exchangeSellPrice">—</b></button></div>
   </section>
   <div class="trade-tabs"><button class="selected" data-order-tab="positions">Positions</button><button data-order-tab="pending">Pending orders</button></div>
   <section class="panel position-panel"><div class="panelHead"><div><span class="eyebrow">DERIV ACCOUNT</span><h2 id="positionsTitle">Open positions</h2></div><span id="positionsUpdated" class="subtle-pill">Not connected</span></div><div id="positionsList" class="account-list"><div class="feed-placeholder">Connect your Deriv Demo account to load positions.</div></div></section>
