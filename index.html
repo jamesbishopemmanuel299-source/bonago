@@ -7,6 +7,7 @@
 <title>BONAGO — Trading</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="chat.css">
 </head>
 <body>
 <div class="app-shell">
@@ -15,7 +16,30 @@
   <div class="top-right"><span id="connectionBadge" class="badge off">DISCONNECTED</span><button class="avatar" aria-label="Account">B</button></div>
 </header>
 <main class="main-content">
-<section id="home" class="page active-page">
+<section id="assistant" class="page active-page">
+  <div class="assistant-layout">
+    <aside class="assistant-sidebar">
+      <div class="assistant-brand"><span class="brand-mark">B</span><div><b>BONAGO AI</b><small>TRADING COPILOT</small></div></div>
+      <button class="assistant-new" id="newChat">＋ New conversation</button>
+      <div class="side-label">DEMO PERFORMANCE</div>
+      <div class="side-stat"><small>SESSION PROFIT / LOSS</small><b id="chatPL">0.00</b></div>
+      <div class="side-stat"><small>NUMBER OF TRADES</small><b id="chatTrades">0</b></div>
+      <div class="side-stat"><small>WIN RATE</small><b id="chatWinRate">0.0%</b></div>
+      <div class="side-stat"><small>OPEN POSITIONS</small><b id="chatOpen">0</b></div>
+      <div class="side-stat"><small>ACCOUNT BALANCE</small><b id="chatBalance">—</b></div>
+      <div class="side-status"><span class="side-dot"></span><span id="chatBotState">BOT STOPPED · DEMO</span></div>
+      <button class="assistant-side-link" data-jump="assets">⚙ Deriv account</button>
+      <button class="assistant-side-link" data-jump="trading">▤ Advanced controls</button>
+    </aside>
+    <div class="assistant-main">
+      <div class="assistant-heading"><div><span class="eyebrow">BONAGO AI · GROQ GPT-OSS 120B</span><h1>What should I trade?</h1><p class="muted">Describe your strategy. I’ll translate it into Demo trading settings.</p></div><span class="demo-chip">● DEMO ONLY</span></div>
+      <div class="assistant-chat" id="assistantMessages" aria-live="polite"><div class="chat-welcome"><div class="chat-spark">✦</div><h2>Trade with a clear plan.</h2><p>Paste a trading command below. I can configure your market, stake, duration and risk limits, analyse signals, and start or stop Demo automation.</p><div class="chat-suggestions"><button data-prompt="Analyse Volatility 75 on the 1-minute timeframe. Set stake to $1, max 5 trades, stop after $5 loss or $3 profit. Do not start yet.">Configure a cautious V75 strategy</button><button data-prompt="Start Demo trading on Volatility 100 with $1 stake, 1-minute candles, maximum 3 trades, $3 loss limit and $2 profit target.">Start a Demo strategy</button><button data-prompt="Stop the trading bot immediately.">Stop the bot</button></div></div></div>
+      <div class="chat-composer"><textarea id="assistantCommand" rows="2" placeholder="Paste your trading command… e.g. Trade V75 with $1 stake and stop at $5 loss"></textarea><button id="sendCommand" aria-label="Send command">↑</button></div>
+      <div class="chat-footnote">BONAGO only connects to Deriv Demo accounts. Starting automation still requires confirmation. AI signals can be wrong; risk limits apply.</div>
+    </div>
+  </div>
+</section>
+<section id="home" class="page">
   <div class="welcome-row"><div><span class="eyebrow">YOUR TRADING SPACE</span><h1>Good day 👋</h1><p class="muted">Track the market and manage your Demo trades.</p></div><span class="demo-chip">● DEMO MODE</span></div>
   <div id="tickerStrip" class="ticker-strip"><span class="ticker-status">Connecting to Deriv market feed…</span></div>
   <article class="hero-balance">
@@ -108,7 +132,8 @@
 </section>
 </main>
 <nav class="bottom-nav" aria-label="Main navigation">
-  <button class="active" data-tab="home"><span>⌂</span><b>Home</b></button>
+  <button class="active" data-tab="assistant"><span>✦</span><b>AI Chat</b></button>
+  <button data-tab="home"><span>⌂</span><b>Home</b></button>
   <button data-tab="markets"><span>▥</span><b>Markets</b></button>
   <button data-tab="trading"><span>⇄</span><b>Trading</b></button>
   <button data-tab="assets"><span>▣</span><b>Assets</b></button>
@@ -125,4 +150,5 @@ new MutationObserver(syncAccountUI).observe(document.getElementById('botStatus')
 </script>
 <script src="marketData.js"></script>
 <script src="app.js"></script>
+<script src="chat.js"></script>
 </body></html>
