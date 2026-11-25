@@ -1,20 +1,11 @@
 services:
   - type: web
-    name: bonago-site
-    runtime: static
-    buildCommand: "echo 'No build step required'"
-    staticPublishPath: .
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    headers:
-      - path: /*
-        name: X-Content-Type-Options
-        value: nosniff
-      - path: /*
-        name: Referrer-Policy
-        value: strict-origin-when-cross-origin
-      - path: /index.html
-        name: Cache-Control
-        value: no-cache, no-store, must-revalidate
+    name: bonago-web
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
