@@ -6,7 +6,8 @@ BONAGO is a browser-based trading dashboard hosted as a Node.js web service on R
 
 Configure these environment variables in the BONAGO Render service:
 
-- `DERIV_CLIENT_ID`: your registered Deriv OAuth 2.0 Client ID.
+- `DERIV_CLIENT_ID`: your registered Deriv OAuth 2.0 Client ID (used for Deriv sign-in).
+- `DERIV_APP_ID`: your numeric Deriv application ID (used in the `Deriv-App-ID` API header; keep it separate from the OAuth Client ID).
 - `DERIV_REDIRECT_URI`: `https://bonago-1.onrender.com/auth/deriv/callback` (must exactly match the redirect URL registered with Deriv).
 - `SESSION_SECRET`: a long, random secret. Render can generate this automatically from `render.yaml`.
 
@@ -16,7 +17,7 @@ Do not commit access tokens, OAuth credentials, or session secrets to GitHub.
 
 1. Register an OAuth 2.0 application with Deriv.
 2. Register exactly `https://bonago-1.onrender.com/auth/deriv/callback` as its redirect URL.
-3. Add the OAuth Client ID to Render as `DERIV_CLIENT_ID`.
+3. Add the OAuth Client ID to Render as `DERIV_CLIENT_ID` and your numeric application ID as `DERIV_APP_ID`.
 4. Deploy the service and open BONAGO.
 5. Select **Sign in with Deriv**, approve the requested permissions, and select a Demo or Real account.
 6. BONAGO's server exchanges the authorization code using PKCE, keeps the access token server-side, and requests a short-lived authenticated WebSocket URL for the selected account.
