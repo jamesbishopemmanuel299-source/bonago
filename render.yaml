@@ -11,7 +11,5 @@ services:
         value: production
       - key: DERIV_CLIENT_ID
         sync: false
-      - key: DERIV_REDIRECT_URI
-        value: https://bonago-1.onrender.com/auth/deriv/callback
-      - key: SESSION_SECRET
-        generateValue: true
+      - key: DERIV_ACCESS_TOKEN
+        sync: false
