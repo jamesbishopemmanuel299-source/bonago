@@ -164,3 +164,72 @@ button:focus-visible{outline:2px solid #9bc5ff;outline-offset:3px}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
   .mobile-top,.panel,.market-card,.market-list,.mini-stat,.trade-summary>div,.quick-action,.bottom-nav,.assets-info,.assets-overview{background:#111c2d}
 }
+
+
+/* BONAGO interface refinement · responsive trading terminal */
+.app-shell{max-width:1180px}
+.main-content{padding:30px clamp(18px,3vw,38px) 48px}
+.bottom-nav{grid-template-columns:repeat(5,minmax(0,1fr));width:min(720px,calc(100% - 28px))}
+.bottom-nav button{border-radius:16px}
+.bottom-nav button.active{background:linear-gradient(145deg,rgba(89,145,235,.19),rgba(57,102,176,.08));box-shadow:inset 0 1px 0 rgba(255,255,255,.09)}
+.page-heading h1,.welcome-row h1{font-size:clamp(27px,3vw,36px)}
+.panel{padding:clamp(16px,2vw,23px);box-shadow:inset 0 1px 0 rgba(255,255,255,.11),0 16px 42px rgba(0,0,0,.2)}
+.panelHead{margin-bottom:17px}
+.panelHead h2{font-size:clamp(16px,1.6vw,20px)}
+.trade-summary>div{min-height:94px;display:flex;flex-direction:column;justify-content:center}
+.trade-summary b{font-size:clamp(17px,2vw,22px);font-variant-numeric:tabular-nums}
+#trading.active-page{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px 16px;align-items:start}
+#trading>.page-heading,#trading>.trade-summary,#trading>.trade-tabs,#trading>#aiDecisionPanel,#trading>#strategy,#trading>#activity{grid-column:1/-1}
+#trading>.position-panel{grid-column:1}
+#trading>#execution{grid-column:2}
+#trading>.trade-tabs{margin-top:5px}
+#execution .mode-warning{border-radius:13px;padding:14px}
+#execution .actions{gap:9px}
+#execution .actions button{min-height:44px;padding:0 15px;border-radius:12px}
+.manual-trade-box{margin-top:18px;padding:16px;border:1px solid rgba(153,190,244,.22);border-radius:16px;background:linear-gradient(145deg,rgba(47,72,109,.27),rgba(11,19,32,.36));box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+.manual-trade-box h3{font:650 16px 'Space Grotesk',sans-serif;margin:6px 0 7px;letter-spacing:-.025em}
+.manual-trade-box p{line-height:1.6;margin-bottom:0}
+.manual-actions{display:grid;grid-template-columns:1fr 1fr;margin-top:15px}
+.manual-actions button{min-height:52px!important;border-radius:13px!important;font-size:12px!important;letter-spacing:.035em}
+.manual-actions #manualCallBtn{background:linear-gradient(135deg,#19bd91,#087e70)!important;border:1px solid rgba(127,255,216,.34)!important;box-shadow:0 8px 24px rgba(12,174,131,.2),inset 0 1px 0 rgba(255,255,255,.25)!important}
+.manual-actions #manualPutBtn{background:linear-gradient(135deg,#f06c82,#b93453)!important;border:1px solid rgba(255,174,187,.3)!important;box-shadow:0 8px 24px rgba(205,52,83,.2),inset 0 1px 0 rgba(255,255,255,.22)!important}
+.manual-actions button:disabled{filter:grayscale(.55);opacity:.42!important;box-shadow:none!important}
+#manualTradeMessage{margin-top:12px}
+#strategy .three{gap:15px}
+#strategy label{min-width:0}
+#strategy input,#strategy select{min-height:44px;border-radius:11px}
+#aiDecisionPanel{position:relative;overflow:hidden}
+#aiDecisionPanel:before{content:"";position:absolute;inset:0 0 auto;height:1px;background:linear-gradient(90deg,transparent,rgba(152,196,255,.6),transparent);pointer-events:none}
+#aiDecisionBadge{max-width:48%;overflow:hidden;text-overflow:ellipsis}
+.account-row{padding:14px;border-radius:13px}
+.account-row:hover{border-color:rgba(145,190,255,.3);background:rgba(39,61,91,.34)}
+.actions button,.primary,.ghost,.quick-action,.trade-tabs button,.market-tabs button{ -webkit-tap-highlight-color:transparent}
+.actions button:active,.primary:active,.ghost:active,.manual-actions button:active{transform:scale(.985)}
+input,select,textarea{min-height:44px;border-radius:11px}
+.message{border-radius:12px}
+#assistant.active-page{min-height:calc(100vh - 190px)}
+.assistant-layout{min-height:620px}
+@media(min-width:900px){
+  .assistant-layout{grid-template-columns:250px minmax(0,1fr);gap:22px}
+  .assistant-sidebar{border-radius:22px}
+  .assistant-main{border-radius:22px;min-width:0}
+}
+@media(max-width:760px){
+  .app-shell{max-width:100%}
+  #trading.active-page{display:block}
+  #trading>.panel{margin:13px 0}
+  .trade-summary{margin-bottom:8px}
+}
+@media(max-width:520px){
+  .main-content{padding:18px 13px 35px}
+  .panel{padding:15px 13px}
+  .manual-trade-box{padding:13px}
+  .manual-actions{gap:8px}
+  .manual-actions button{min-height:49px!important;padding:0 8px!important;font-size:10px!important}
+  .trade-summary>div{min-height:82px}
+  .bottom-nav{padding:6px 5px;border-radius:20px}
+  .bottom-nav button{min-height:49px}
+  .bottom-nav button span{font-size:19px}
+  .bottom-nav button b{font-size:8px}
+}
+@media(prefers-reduced-motion:reduce){.actions button:active,.primary:active,.ghost:active,.manual-actions button:active{transform:none}}
