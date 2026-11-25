@@ -78,7 +78,7 @@
       <label>Take-profit target<input id="profitTarget" type="number" min="0.01" step="0.01" value="3"></label>
       <label>Cooldown (minutes)<input id="cooldown" type="number" min="0" max="120" value="5"></label>
     </div>
-    <div class="strategy-note"><b>Strategy logic</b><span>CALL when fast EMA crosses above slow EMA; PUT on the reverse crossover. One open contract at a time. Settings do not guarantee profit.</span></div>
+    <div class="strategy-note"><b>AI strategy · Groq GPT-OSS 120B</b><span>AI analyses recent one-minute OHLC candles. It trades only CALL/PUT decisions with at least 75% confidence and no risk flags. HOLD or AI/API failure means no trade. One open contract at a time.</span></div>
   </section>
   <section id="activity" class="panel">
     <div class="panelHead"><div><span class="eyebrow">MONITORING</span><h2>Activity log</h2></div><button id="clearLog" class="textButton">Clear log</button></div>
