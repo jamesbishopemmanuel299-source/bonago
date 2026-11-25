@@ -8,7 +8,12 @@
  async function submit(){const command=input.value.trim();if(!command)return;input.value="";addMessage("user",command);const wait=addMessage("assistant","Interpreting your command with Groq GPT-OSS 120B…");send.disabled=true;
  try{const r=await fetch("/api/ai/command",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({command})});const d=await r.json();if(!r.ok)throw Error(d.error||"Command failed");wait.remove();
  if(d.intent==="stop"){window.BONAGO?.stopBot("Stopped by your chat command.");addMessage("assistant","The Demo bot has been stopped. Any already-open contract may continue until its expiry.");syncStats();return}
- $("symbol").value=d.symbol;$("stake").value=d.stake;$("duration").value=String(d.duration_minutes);$("maxTrades").value=d.max_trades;$("lossLimit").value=d.loss_limit;$("profitTarget").value=d.profit_target;
+ const marketSelect=$("symbol");
+ const supported=[...marketSelect.options].some(option=>option.value===d.symbol);
+ if(!supported)throw Error("The requested market "+d.symbol+" is not in Deriv's currently available market list. Choose a market shown in BONAGO Markets; no trade was placed.");
+ if(window.BONAGO?.getState?.().botRunning && marketSelect.value!==d.symbol)throw Error("Stop the running bot before changing markets.");
+ marketSelect.value=d.symbol;marketSelect.dispatchEvent(new Event("change",{bubbles:true}));
+ $("stake").value=d.stake;$("duration").value=String(d.duration_minutes);$("maxTrades").value=d.max_trades;$("lossLimit").value=d.loss_limit;$("profitTarget").value=d.profit_target;
  const summary="Settings applied (Demo only):\n• Market: "+d.symbol+"\n• Stake: "+d.stake+" "+(window.BONAGO?.getState?.().authorized?.currency||"account currency")+"\n• Contract duration: "+d.duration_minutes+" minute(s)\n• Maximum trades: "+d.max_trades+"\n• Session loss limit: "+d.loss_limit+"\n• Profit target: "+d.profit_target+"\n\n"+d.rationale;
  addMessage("assistant",summary);
  if(d.intent==="start"){addMessage("assistant","You explicitly requested automatic trading. Confirm the Demo-only start prompt to begin. If no Deriv Demo account is connected, connect it first.");if(window.BONAGO?.getState?.().authorized)await window.BONAGO.startBot()}
