@@ -207,7 +207,8 @@
     if(values.length<2){rsiCtx.fillText("RSI(14) waiting for candles",8,h/2);return;}
     rsiCtx.beginPath();values.forEach((v,i)=>{const x=8+(w-32)*i/Math.max(1,values.length-1),y=h-(v/100)*h;if(i===0)rsiCtx.moveTo(x,y);else rsiCtx.lineTo(x,y)});rsiCtx.strokeStyle="#9b70c9";rsiCtx.lineWidth=1.5;rsiCtx.stroke();
   }
-\n  function chartConnect(){
+
+  function chartConnect(){
     if(!chartCanvas)return;
     if(chartState.ws){try{chartState.ws.close()}catch{}}
     chartState.symbol=$("symbol")?.value||"R_100";chartState.points=[];chartState.subscription=null;
