@@ -153,6 +153,18 @@ function getDerivSession(req) {
   return getDerivTokenCandidates(req)[0] || null;
 }
 
+const aiRequestWindows = new Map();
+function enforceAiRateLimit(req,res,limit=18){
+  const sid=verifyCookie(cookieValue(req,"bonago_sid"));
+  const key=sid||req.ip||"unknown";
+  const now=Date.now(),windowMs=60*1000;
+  const recent=(aiRequestWindows.get(key)||[]).filter(t=>now-t<windowMs);
+  if(recent.length>=limit){res.setHeader("Retry-After","60");res.status(429).json({error:"BONAGO AI rate limit reached. Wait one minute before retrying.",code:"AI_RATE_LIMIT"});return false}
+  recent.push(now);aiRequestWindows.set(key,recent);
+  if(aiRequestWindows.size>500)for(const [k,v] of aiRequestWindows)if(!v.some(t=>now-t<windowMs))aiRequestWindows.delete(k);
+  return true;
+}
+
 app.get("/api/deriv/accounts", async (req, res) => {
   const candidates = getDerivTokenCandidates(req);
   if (!candidates.length) return res.status(401).json({ error: "Connect your Deriv account first." });
@@ -314,6 +326,7 @@ app.get("/api/ai/status", async (_req, res) => {
 
 app.post("/api/ai/analyze", express.json({limit:"32kb"}), async (req,res) => {
  if (!getDerivSession(req)) return res.status(401).json({error:"Connect Deriv Demo first."});
+ if (!enforceAiRateLimit(req,res,18)) return;
  const symbol=String(req.body?.symbol||""); const candles=req.body?.candles;
  if (!/^[A-Za-z0-9_]{2,24}$/.test(symbol) || !Array.isArray(candles) || candles.length<20 || candles.length>60) return res.status(400).json({error:"Need 20–60 recent candles."});
  const data=candles.map(c=>({open:Number(c.open),high:Number(c.high),low:Number(c.low),close:Number(c.close)}));
@@ -328,6 +341,7 @@ app.post("/api/ai/analyze", express.json({limit:"32kb"}), async (req,res) => {
 
 app.post("/api/ai/command", express.json({limit:"8kb"}), async (req,res) => {
   if (!getDerivSession(req)) return res.status(401).json({error:"Connect Deriv Demo first."});
+ if (!enforceAiRateLimit(req,res,12)) return;
   const command=String(req.body?.command||"").trim();
   if (!command || command.length>3000) return res.status(400).json({error:"Enter a command under 3,000 characters."});
   try {
