@@ -114,6 +114,11 @@
     </div>
     <div class="strategy-note"><b>AI strategy · Groq GPT-OSS 120B</b><span>AI analyses recent one-minute OHLC candles. It trades only CALL/PUT decisions with at least 75% confidence and no risk flags. HOLD or AI/API failure means no trade. One open contract at a time.</span></div>
   </section>
+  <section id="tradeHistory" class="panel">
+    <div class="panelHead"><div><span class="eyebrow">ACCOUNT RECORDS</span><h2>Trade history</h2></div><button id="refreshTradeHistory" class="textButton">Refresh</button></div>
+    <div class="trade-history-summary"><span>RECORDS LOADED</span><b id="historyCount">0</b><span>·</span><span>REAL DERIV ACCOUNT STATEMENT</span></div>
+    <div id="tradeHistoryList" class="account-list"><div class="feed-placeholder">Connect your Deriv Demo account to load trade history.</div></div>
+  </section>
   <section id="activity" class="panel">
     <div class="panelHead"><div><span class="eyebrow">MONITORING</span><h2>Activity log</h2></div><button id="clearLog" class="textButton">Clear log</button></div>
     <div id="log" class="log" aria-live="polite"><div class="logrow">BONAGO ready. No trades have been placed.</div></div>
