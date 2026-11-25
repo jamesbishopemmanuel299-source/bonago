@@ -136,63 +136,79 @@ app.get("/auth/deriv/callback", async (req, res) => {
   }
 });
 
-function getDerivSession(req) {
-  if ((DERIV_APP_ID || DERIV_CLIENT_ID) && (DERIV_ACCESS_TOKEN || DERIV_DEMO_ACCESS_TOKEN)) return { accessToken: DERIV_ACCESS_TOKEN || DERIV_DEMO_ACCESS_TOKEN, tokenSource: DERIV_ACCESS_TOKEN ? "render-live-token" : "render-demo-fallback", expiresAt: Number.MAX_SAFE_INTEGER };
+function getDerivTokenCandidates(req) {
+  const candidates = [];
+  if (DERIV_APP_ID || DERIV_CLIENT_ID) {
+    if (DERIV_ACCESS_TOKEN) candidates.push({ accessToken: DERIV_ACCESS_TOKEN, tokenSource: "render-live-token", expiresAt: Number.MAX_SAFE_INTEGER });
+    if (DERIV_DEMO_ACCESS_TOKEN) candidates.push({ accessToken: DERIV_DEMO_ACCESS_TOKEN, tokenSource: "render-demo-fallback", expiresAt: Number.MAX_SAFE_INTEGER });
+  }
   const sid = verifyCookie(cookieValue(req, "bonago_sid"));
   const session = sid && sessions.get(sid);
-  if (!session || session.expiresAt <= Date.now()) {
-    if (sid) sessions.delete(sid);
-    return null;
-  }
-  return session;
+  if (session && session.expiresAt > Date.now()) candidates.push({ ...session, tokenSource: "oauth-session" });
+  else if (sid) sessions.delete(sid);
+  return candidates;
+}
+function getDerivSession(req) {
+  return getDerivTokenCandidates(req)[0] || null;
 }
 
 app.get("/api/deriv/accounts", async (req, res) => {
-  const session = getDerivSession(req);
-  if (!session) return res.status(401).json({ error: "Connect your Deriv account first." });
-  try {
-    const response = await fetch("https://api.derivws.com/trading/v1/options/accounts", {
-      headers: derivHeaders(session.accessToken)
-    });
-    const body = await response.json();
-    if (!response.ok) {
-      const message = body.errors?.[0]?.message || "Could not load Deriv accounts.";
-      console.error("Deriv accounts API rejected request:", response.status, message);
-      return res.status(response.status).json({ error: message, code: body.errors?.[0]?.code || "DerivAPIError", upstreamStatus: response.status });
+  const candidates = getDerivTokenCandidates(req);
+  if (!candidates.length) return res.status(401).json({ error: "Connect your Deriv account first." });
+  let lastFailure = null;
+  for (const session of candidates) {
+    try {
+      const response = await fetch("https://api.derivws.com/trading/v1/options/accounts", {
+        headers: derivHeaders(session.accessToken), signal: AbortSignal.timeout(10000)
+      });
+      const body = await response.json();
+      if (!response.ok) {
+        lastFailure = { status: response.status, body };
+        console.warn("Deriv token rejected; trying next configured token:", session.tokenSource, response.status);
+        continue;
+      }
+      const raw = body.data?.accounts || body.data || [];
+      const accounts = (Array.isArray(raw) ? raw : []).map(account => ({
+        account_id: account.account_id || account.id,
+        account_type: account.account_type || account.account_category || (account.is_virtual ? "demo" : "real"),
+        currency: account.currency || "USD",
+        balance: Number(account.balance || 0),
+        loginid: account.loginid || account.account_id || account.id,
+        is_virtual: account.is_virtual === true || String(account.account_type || account.account_category || "").toLowerCase() === "demo"
+      })).filter(account => account.account_id && account.is_virtual);
+      return res.json({ accounts, mode: "demo-only", tokenSource: session.tokenSource || "oauth-session", liveTokenConfigured: Boolean(DERIV_ACCESS_TOKEN), demoFallbackConfigured: Boolean(DERIV_DEMO_ACCESS_TOKEN) });
+    } catch (error) {
+      lastFailure = { error };
+      console.warn("Deriv token request failed; trying next configured token:", session.tokenSource, error.message);
     }
-    const raw = body.data?.accounts || body.data || [];
-    const accounts = (Array.isArray(raw) ? raw : []).map(account => ({
-      account_id: account.account_id || account.id,
-      account_type: account.account_type || account.account_category || (account.is_virtual ? "demo" : "real"),
-      currency: account.currency || "USD",
-      balance: Number(account.balance || 0),
-      loginid: account.loginid || account.account_id || account.id,
-      is_virtual: account.is_virtual === true || String(account.account_type || account.account_category || "").toLowerCase() === "demo"
-    })).filter(account => account.account_id && account.is_virtual);
-    return res.json({ accounts, mode: "demo-only", tokenSource: session.tokenSource || "oauth-session", liveTokenConfigured: Boolean(DERIV_ACCESS_TOKEN), demoFallbackConfigured: Boolean(DERIV_DEMO_ACCESS_TOKEN) });
-  } catch (error) {
-    console.error("Deriv accounts request failed:", error.message);
-    return res.status(502).json({ error: "Could not reach Deriv account service." });
   }
+  const upstreamStatus = lastFailure?.status || 502;
+  const message = lastFailure?.body?.errors?.[0]?.message || "No configured Deriv token could load Demo accounts. Check the live token and Demo fallback in Render.";
+  return res.status(upstreamStatus).json({ error: message, code: lastFailure?.body?.errors?.[0]?.code || "DerivTokenUnavailable", upstreamStatus });
 });
 
 app.post("/api/deriv/otp", express.json(), async (req, res) => {
-  const session = getDerivSession(req);
-  if (!session) return res.status(401).json({ error: "Your Deriv session has expired. Connect again." });
+  const candidates = getDerivTokenCandidates(req);
+  if (!candidates.length) return res.status(401).json({ error: "Your Deriv session has expired. Connect again." });
   const accountId = String(req.body?.accountId || "");
   if (!/^[A-Za-z0-9_-]{4,64}$/.test(accountId)) return res.status(400).json({ error: "Choose a valid Deriv Demo account." });
   try {
-    // Re-check account type on the server; never trust the browser's selected account or mode.
-    const accountsResponse = await fetch("https://api.derivws.com/trading/v1/options/accounts", {
-      headers: derivHeaders(session.accessToken)
-    });
-    const accountsBody = await accountsResponse.json();
-    if (!accountsResponse.ok) return res.status(502).json({ error: "Could not verify the selected Deriv account type." });
-    const rawAccounts = accountsBody.data?.accounts || accountsBody.data || [];
-    const selected = (Array.isArray(rawAccounts) ? rawAccounts : []).find(a => String(a.account_id || a.id || "") === accountId);
-    const isVirtual = selected && (selected.is_virtual === true || String(selected.account_type || selected.account_category || "").toLowerCase() === "demo");
+    // Match the selected account against each token. If the primary/live token is
+    // invalid or does not own this Demo account, try the configured Demo fallback.
+    let session = null, selected = null;
+    for (const candidate of candidates) {
+      const accountsResponse = await fetch("https://api.derivws.com/trading/v1/options/accounts", {
+        headers: derivHeaders(candidate.accessToken), signal: AbortSignal.timeout(10000)
+      });
+      const accountsBody = await accountsResponse.json();
+      if (!accountsResponse.ok) continue;
+      const rawAccounts = accountsBody.data?.accounts || accountsBody.data || [];
+      const match = (Array.isArray(rawAccounts) ? rawAccounts : []).find(a => String(a.account_id || a.id || "") === accountId);
+      if (match) { session = candidate; selected = match; break; }
+    }
+    if (!selected) return res.status(404).json({ error: "The selected Demo account was not found under the primary or fallback Deriv token." });
+    const isVirtual = selected.is_virtual === true || String(selected.account_type || selected.account_category || "").toLowerCase() === "demo";
     if (DEMO_ONLY && !isVirtual) return res.status(403).json({ error: "BONAGO is locked to Demo accounts. Real-account connections are disabled." });
-    if (!selected) return res.status(404).json({ error: "The selected account was not found on this Deriv login." });
     const response = await fetch("https://api.derivws.com/trading/v1/options/accounts/" + encodeURIComponent(accountId) + "/otp", {
       method: "POST",
       headers: derivHeaders(session.accessToken)
