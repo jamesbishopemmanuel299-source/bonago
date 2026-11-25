@@ -8,6 +8,16 @@
  async function submit(){const command=input.value.trim();if(!command)return;input.value="";addMessage("user",command);const wait=addMessage("assistant","Interpreting your command with Groq GPT-OSS 120B…");send.disabled=true;
  try{const r=await fetch("/api/ai/command",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({command})});const d=await r.json();if(!r.ok)throw Error(d.error||"Command failed");wait.remove();
  if(d.intent==="stop"){window.BONAGO?.stopBot("Stopped by your chat command.");addMessage("assistant","The Demo bot has been stopped. Any already-open contract may continue until its expiry.");syncStats();return}
+ if(d.intent==="trade_call"||d.intent==="trade_put"){
+  $("symbol").value=d.symbol;$("stake").value=d.stake;$("duration").value=String(d.duration_minutes);$("maxTrades").value=d.max_trades;$("lossLimit").value=d.loss_limit;$("profitTarget").value=d.profit_target;
+  const direction=d.intent==="trade_call"?"CALL":"PUT";
+  addMessage("assistant","Trade request understood: "+direction+" on "+d.symbol+" with "+d.stake+" stake for "+d.duration_minutes+" minute(s). I will submit it only after you approve the Deriv Demo confirmation.");
+  if(!window.BONAGO?.getState?.().authorized){addMessage("assistant","Not connected. Connect your Deriv Demo account first. No order was placed.");return}
+  if(window.BONAGO?.getState?.().botRunning){addMessage("assistant","Automatic bot is running. Stop it before requesting a separate chat trade. No order was placed.");return}
+  try{await window.BONAGO.chatTrade(direction);addMessage("assistant","Trade request processed. Check the Trading tab and Deriv positions for the confirmed contract.");}
+  catch(e){addMessage("assistant","Trade was not placed: "+e.message);}
+  syncStats();return;
+ }
  $("symbol").value=d.symbol;$("stake").value=d.stake;$("duration").value=String(d.duration_minutes);$("maxTrades").value=d.max_trades;$("lossLimit").value=d.loss_limit;$("profitTarget").value=d.profit_target;
  const summary="Settings applied (Demo only):\n• Market: "+d.symbol+"\n• Stake: "+d.stake+" "+(window.BONAGO?.getState?.().authorized?.currency||"account currency")+"\n• Contract duration: "+d.duration_minutes+" minute(s)\n• Maximum trades: "+d.max_trades+"\n• Session loss limit: "+d.loss_limit+"\n• Profit target: "+d.profit_target+"\n\n"+d.rationale;
  addMessage("assistant",summary);
