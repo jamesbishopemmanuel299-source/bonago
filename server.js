@@ -332,6 +332,10 @@ app.post("/api/ai/command", express.json({limit:"8kb"}), async (req,res) => {
     const parsed=parseGroqJson(body.choices?.[0]?.message?.content);
     if(parsed.intent==="start" && !/\b(start|start trading|activate|enable|begin|trade automatically|turn on)\b/i.test(command)) parsed.intent="configure";
     if(parsed.intent==="stop" && !/\b(stop|halt|disable|turn off|emergency)\b/i.test(command)) parsed.intent="configure";
+    if(parsed.intent==="trade_call" && !/\b(buy|place|open|execute)\b/i.test(command)) parsed.intent="configure";
+    if(parsed.intent==="trade_put" && !/\b(buy|place|open|execute)\b/i.test(command)) parsed.intent="configure";
+    if(parsed.intent==="trade_call" && !/\b(call|up)\b/i.test(command)) parsed.intent="configure";
+    if(parsed.intent==="trade_put" && !/\b(put|down)\b/i.test(command)) parsed.intent="configure";
     if(!["configure","start","stop","analyze","trade_call","trade_put"].includes(parsed.intent)||!["R_100","R_75","R_50","R_25","1HZ100V"].includes(parsed.symbol)||![1,3,5].includes(parsed.duration_minutes)||!Number.isFinite(parsed.stake)||parsed.stake<0.35||parsed.stake>100||!Number.isInteger(parsed.max_trades)||parsed.max_trades<1||parsed.max_trades>20||!Number.isFinite(parsed.loss_limit)||parsed.loss_limit<=0||!Number.isFinite(parsed.profit_target)||parsed.profit_target<=0) return res.status(502).json({error:"The AI returned invalid settings. No changes were made.",code:"GROQ_INVALID_OUTPUT"});
     return res.json({...parsed,model:GROQ_MODEL,mode:"demo-only"});
   } catch(e) { console.error("Groq command parse failed:", JSON.stringify({code:e.publicCode||"GROQ_FAILURE",providerStatus:e.providerStatus,providerCode:e.providerCode,providerMessage:e.providerMessage||e.message})); return res.status(503).json({error:e.message||"AI command service unavailable. No trade was placed.",code:e.publicCode||"GROQ_FAILURE",providerStatus:e.providerStatus,providerCode:e.providerCode,providerMessage:e.providerMessage}); }
