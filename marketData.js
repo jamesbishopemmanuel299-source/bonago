@@ -131,7 +131,6 @@
     const filtered=state.symbols.filter(s=>(state.filter==="all"||categoryOf(s)===state.filter)&&((s.display_name+" "+s.symbol+" "+categoryLabel(categoryOf(s))).toLowerCase().includes(state.search)));
     const wanted=new Set([selected,...filtered.slice(0,7).map(s=>s.symbol)].filter(Boolean).slice(0,8));
     for(const [symbol,id] of state.subscriptions) { if(!wanted.has(symbol)) { try{ws.send(JSON.stringify({forget:id,req_id:state.nextReq++}));}catch{} state.subscriptions.delete(symbol); } }
-    for(const [reqId,symbol] of state.pendingSubs) if(!wanted.has(symbol)) state.pendingSubs.delete(reqId);
     for(const symbol of wanted) { if(state.subscriptions.has(symbol)||[...state.pendingSubs.values()].includes(symbol)) continue; const reqId=state.nextReq++; state.pendingSubs.set(reqId,symbol); try{ws.send(JSON.stringify({ticks:symbol,subscribe:1,req_id:reqId}));}catch(error){state.pendingSubs.delete(reqId);console.warn("Deriv tick subscription failed:",symbol,error);} }
   }
   function connect() {
@@ -143,7 +142,7 @@
       let data;try{data=JSON.parse(event.data)}catch{return}
       if(data.req_id && state.pendingSubs.has(Number(data.req_id))) {
         const symbol=state.pendingSubs.get(Number(data.req_id));state.pendingSubs.delete(Number(data.req_id));
-        if(data.subscription?.id) state.subscriptions.set(symbol,String(data.subscription.id));
+        if(data.subscription?.id) { state.subscriptions.set(symbol,String(data.subscription.id)); syncTickSubscriptions(); }
       }
       if(data.error){
         if(data.req_id) state.pendingSubs.delete(Number(data.req_id));
