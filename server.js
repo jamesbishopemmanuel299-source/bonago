@@ -17,7 +17,7 @@ const DEMO_ONLY = true; // Server-enforced: this deployment cannot authorize Rea
 function derivHeaders(accessToken = DERIV_ACCESS_TOKEN, extra = {}) {
   return {
     Authorization: "Bearer " + accessToken,
-    ...(DERIV_APP_ID ? { "Deriv-App-ID": DERIV_APP_ID } : {}),
+    ...((DERIV_APP_ID || DERIV_CLIENT_ID) ? { "Deriv-App-ID": DERIV_APP_ID || DERIV_CLIENT_ID } : {}),
     ...extra
   };
 }
@@ -58,8 +58,8 @@ app.get("/health", (_req, res) => res.status(200).json({
   ok: true,
   service: "BONAGO",
   derivOAuthConfigured: Boolean(DERIV_CLIENT_ID && SESSION_SECRET),
-  derivSecretConfigured: Boolean(DERIV_CLIENT_ID && DERIV_ACCESS_TOKEN),
-  derivAppIdConfigured: Boolean(DERIV_APP_ID),
+  derivSecretConfigured: Boolean((DERIV_APP_ID || DERIV_CLIENT_ID) && DERIV_ACCESS_TOKEN),
+  derivAppIdConfigured: Boolean(DERIV_APP_ID || DERIV_CLIENT_ID),
   mode: "demo-only"
 }));
 
@@ -67,7 +67,7 @@ app.get("/health", (_req, res) => res.status(200).json({
 // access tokens and PKCE verifiers are never returned by this endpoint.
 app.get("/api/config", (_req, res) => res.json({
   derivOAuthConfigured: Boolean(DERIV_CLIENT_ID && SESSION_SECRET),
-  derivAppIdConfigured: Boolean(DERIV_APP_ID),
+  derivAppIdConfigured: Boolean(DERIV_APP_ID || DERIV_CLIENT_ID),
   mode: "demo-only",
   redirectUri: DERIV_REDIRECT_URI
 }));
@@ -129,7 +129,7 @@ app.get("/auth/deriv/callback", async (req, res) => {
 });
 
 function getDerivSession(req) {
-  if (DERIV_CLIENT_ID && DERIV_ACCESS_TOKEN) return { accessToken: DERIV_ACCESS_TOKEN, expiresAt: Number.MAX_SAFE_INTEGER };
+  if ((DERIV_APP_ID || DERIV_CLIENT_ID) && DERIV_ACCESS_TOKEN) return { accessToken: DERIV_ACCESS_TOKEN, expiresAt: Number.MAX_SAFE_INTEGER };
   const sid = verifyCookie(cookieValue(req, "bonago_sid"));
   const session = sid && sessions.get(sid);
   if (!session || session.expiresAt <= Date.now()) {
@@ -203,7 +203,7 @@ app.post("/api/deriv/otp", express.json(), async (req, res) => {
 });
 
 app.get("/api/deriv/status", (req, res) => {
-  if (DERIV_CLIENT_ID && DERIV_ACCESS_TOKEN) return res.json({ connected: true, source: "render-secrets" });
+  if ((DERIV_APP_ID || DERIV_CLIENT_ID) && DERIV_ACCESS_TOKEN) return res.json({ connected: true, source: "render-secrets" });
   const sid = verifyCookie(cookieValue(req, "bonago_sid"));
   const session = sid && sessions.get(sid);
   if (!session || session.expiresAt <= Date.now()) {
