@@ -309,7 +309,7 @@ app.post("/api/ai/command", express.json({limit:"8kb"}), async (req,res) => {
       ],
       response_format:{type:"json_schema",json_schema:{name:"bonago_command",strict:true,schema:{type:"object",properties:{
         intent:{type:"string",enum:["configure","start","stop","analyze"]},
-        symbol:{type:"string",pattern:"^[A-Za-z0-9_]{2,32}$"},
+        symbol:{type:"string"},
         stake:{type:"number",minimum:0.35,maximum:100},
         duration_minutes:{type:"integer",enum:[1,3,5]},
         max_trades:{type:"integer",minimum:1,maximum:20},
