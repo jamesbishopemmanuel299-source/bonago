@@ -336,7 +336,19 @@ app.post("/api/ai/analyze", express.json({limit:"32kb"}), async (req,res) => {
   const b=await groqChat({model:GROQ_MODEL,reasoning_effort:"medium",temperature:0.1,max_completion_tokens:500,messages:[{role:"system",content:"Cautious technical analyst. Use only supplied OHLC candles. Never promise profit. Prefer HOLD if evidence is mixed or weak. CALL means up, PUT means down. Confidence 0-100 is only an estimate. Flag high volatility, conflicting momentum or insufficient evidence. Never advise bypassing risk controls."},{role:"user",content:"Analyse one-minute candles for "+symbol+", oldest to newest: "+JSON.stringify(data)}],response_format:{type:"json_schema",json_schema:{name:"bonago_decision",strict:true,schema:{type:"object",properties:{action:{type:"string",enum:["CALL","PUT","HOLD"]},confidence:{type:"integer"},rationale:{type:"string"},risk_flags:{type:"array",items:{type:"string"}}},required:["action","confidence","rationale","risk_flags"],additionalProperties:false}}}});
   const d=JSON.parse(b.choices?.[0]?.message?.content||"{}");
   if(!["CALL","PUT","HOLD"].includes(d.action)||!Number.isInteger(d.confidence)||d.confidence<0||d.confidence>100||typeof d.rationale!=="string"||!Array.isArray(d.risk_flags)) return res.status(502).json({error:"Invalid AI decision. No trade was placed.",code:"GROQ_INVALID_OUTPUT"});
-  return res.json({...d,model:GROQ_MODEL,provider:"Groq"});
+  const entry_price=data[data.length-1].close;
+  const recent=data.slice(-12);
+  const swingLow=Math.min(...recent.map(c=>c.low));
+  const swingHigh=Math.max(...recent.map(c=>c.high));
+  let setup={entry_price:null,stop_loss:null,take_profit:null,risk_reward:"1:1.5",setup_note:"Wait for a clearer setup."};
+  if(d.action==="CALL"&&entry_price>swingLow){
+    const risk=entry_price-swingLow;
+    if(risk>0)setup={entry_price:Number(entry_price.toFixed(8)),stop_loss:Number(swingLow.toFixed(8)),take_profit:Number((entry_price+risk*1.5).toFixed(8)),risk_reward:"1:1.5",setup_note:"Illustrative CALL levels from the recent 12-candle swing low. Wait for confirmation."};
+  }else if(d.action==="PUT"&&swingHigh>entry_price){
+    const risk=swingHigh-entry_price;
+    if(risk>0)setup={entry_price:Number(entry_price.toFixed(8)),stop_loss:Number(swingHigh.toFixed(8)),take_profit:Number((entry_price-risk*1.5).toFixed(8)),risk_reward:"1:1.5",setup_note:"Illustrative PUT levels from the recent 12-candle swing high. Wait for confirmation."};
+  }
+  return res.json({...d,...setup,model:GROQ_MODEL,provider:"Groq"});
  } catch(e) { console.error("Groq analysis failed:", JSON.stringify({code:e.publicCode||"GROQ_FAILURE",providerStatus:e.providerStatus,providerCode:e.providerCode,providerMessage:e.providerMessage||e.message})); return res.status(503).json({error:e.message||"Groq unavailable; no trade placed.",code:e.publicCode||"GROQ_FAILURE",providerStatus:e.providerStatus,providerCode:e.providerCode,providerMessage:e.providerMessage}); }
 });
 
