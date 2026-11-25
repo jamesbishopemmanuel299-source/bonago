@@ -1,6 +1,6 @@
 (() => {
   const ENDPOINT = "wss://api.derivws.com/trading/v1/options/ws/public";
-  const MAX_MARKETS = 48;
+  const MAX_MARKETS = 500;
   const state = { socket: null, symbols: [], quotes: new Map(), nodes: new Map(), filter: "all", search: "", retry: 0, timer: null, connected: false };
   const $ = id => document.getElementById(id);
   const categoryOf = s => {
@@ -117,13 +117,11 @@
     catch(e) { setStatus("SUBSCRIPTION ERROR",false); }
     const select=$("symbol");
     if(select){
-      const synth=state.symbols.filter(s=>categoryOf(s)==="synthetic");
-      if(synth.length){
-        const current=select.value, frag=document.createDocumentFragment();
-        synth.forEach(s=>{const o=document.createElement("option");o.value=s.symbol;o.textContent=(s.display_name||s.symbol)+" ("+s.symbol+")";frag.append(o)});
-        select.replaceChildren(frag);
-        select.value=synth.some(s=>s.symbol===current)?current:(synth.find(s=>s.symbol==="R_100")?.symbol||synth[0].symbol);
-      }
+      const current=select.value, frag=document.createDocumentFragment();
+      state.symbols.forEach(s=>{const o=document.createElement("option");o.value=s.symbol;o.textContent=(s.display_name||s.symbol)+" ("+s.symbol+") · "+categoryLabel(categoryOf(s));frag.append(o)});
+      select.replaceChildren(frag);
+      select.value=state.symbols.some(s=>s.symbol===current)?current:(state.symbols.find(s=>s.symbol==="R_75")?.symbol||state.symbols[0].symbol);
+      select.dispatchEvent(new Event("change",{bubbles:true}));
     }
   }
   function connect() {
@@ -140,6 +138,16 @@
     ws.onerror=()=>setStatus("FEED CONNECTION ERROR",false);
     ws.onclose=()=>{state.connected=false;setStatus("RECONNECTING",false);state.retry=Math.min(state.retry+1,6);state.timer=setTimeout(connect,Math.min(30000,1000*Math.pow(2,state.retry)));};
   }
+  document.addEventListener("click",e=>{
+    const row=e.target.closest(".live-market-row");
+    if(!row)return;
+    const symbol=row.dataset.symbol,select=$("symbol");
+    if(!select||![...select.options].some(o=>o.value===symbol))return;
+    select.value=symbol;select.dispatchEvent(new Event("change",{bubbles:true}));
+    document.querySelectorAll(".live-market-row").forEach(n=>n.classList.toggle("market-selected",n.dataset.symbol===symbol));
+    const tradingTab=document.querySelector('[data-tab="trading"]');
+    if(tradingTab)tradingTab.click();
+  });
   $("marketSearch")?.addEventListener("input",e=>{state.search=e.target.value.trim().toLowerCase();render()});
   $("marketTabs")?.addEventListener("click",e=>{const b=e.target.closest("[data-market-filter]");if(!b)return;state.filter=b.dataset.marketFilter;$("marketTabs").querySelectorAll("button").forEach(x=>x.classList.toggle("selected",x===b));render()});
   window.addEventListener("online",()=>{if(!state.connected)connect()});
