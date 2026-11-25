@@ -31,3 +31,15 @@ button,input,select{font:inherit}button{cursor:pointer}.app-shell{max-width:900p
 .position-panel{margin-top:12px}
 .trade-summary{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media(max-width:520px){.trade-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.page-heading{flex-wrap:wrap}.account-chip{font-size:8px;padding:6px}}
+
+.ai-decision-panel{border-color:#29466d;background:linear-gradient(145deg,#111b29,#11161d)}
+.ai-decision-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:12px 0}
+.ai-decision-grid>div{padding:12px;background:#0b121c;border:1px solid #27364a;border-radius:10px;min-width:0}
+.ai-decision-grid small,.ai-explain-block>small{display:block;color:#8296b2;font-size:8px;font-weight:800;letter-spacing:.12em}
+.ai-decision-grid b{display:block;margin-top:7px;font:700 14px 'Space Grotesk',sans-serif;overflow-wrap:anywhere}
+.ai-explain-block{padding:12px;margin-top:9px;background:#0b1119;border:1px solid #222e3d;border-radius:10px}
+.ai-explain-block p{margin:7px 0 0;color:#c3cedc;font-size:11px;line-height:1.65;overflow-wrap:anywhere}
+.ai-explain-block ul{margin:8px 0 0;padding-left:18px;color:#bdc9d8;font-size:10px;line-height:1.8}
+.ai-disclaimer{color:#7f8d9e;font-size:9px;line-height:1.6;margin:11px 1px 0}
+#aiDecisionBadge{white-space:nowrap}
+@media(max-width:420px){.ai-decision-grid{grid-template-columns:1fr 1fr}.ai-decision-grid>div:last-child{grid-column:1/-1}}
