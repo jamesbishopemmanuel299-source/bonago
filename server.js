@@ -225,13 +225,15 @@ const GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 function groqFailure(status, body) {
-  const code = body?.error?.code || body?.error?.type || "";
-  const message = String(body?.error?.message || "").toLowerCase();
-  if (status === 401 || status === 403) return { status: 503, code: "GROQ_AUTH", message: "Groq rejected GROQ_API_KEY. Check the key in Render Environment and redeploy." };
-  if (status === 429 || /rate limit|quota|tokens per|requests per/.test(message)) return { status: 503, code: "GROQ_LIMIT", message: "Groq rate limit or account quota reached. Check Groq usage and limits, then retry." };
-  if (status >= 500) return { status: 503, code: "GROQ_UPSTREAM", message: "Groq is temporarily unavailable. No trade was placed." };
-  if (/model/.test(message) || code === "model_not_found") return { status: 503, code: "GROQ_MODEL", message: "Groq model is unavailable or not enabled for this key. Check GROQ_MODEL in Render." };
-  return { status: 503, code: "GROQ_REQUEST", message: "Groq rejected the request. Check model settings and API limits." };
+  const rawCode = body?.error?.code || body?.error?.type || "";
+  const rawMessage = String(body?.error?.message || "No provider detail returned").replace(/[\\r\\n\\t]+/g, " ").slice(0, 240);
+  const message = rawMessage.toLowerCase();
+  const detail = { providerStatus: status, providerCode: String(rawCode).slice(0, 80), providerMessage: rawMessage };
+  if (status === 401 || status === 403) return { status: 503, code: "GROQ_AUTH", message: "Groq rejected GROQ_API_KEY. Check the key in Render Environment and redeploy.", ...detail };
+  if (status === 429 || /rate limit|quota|tokens per|requests per/.test(message)) return { status: 503, code: "GROQ_LIMIT", message: "Groq rate limit or account quota reached. Check Groq usage and limits, then retry.", ...detail };
+  if (/model/.test(message) || rawCode === "model_not_found") return { status: 503, code: "GROQ_MODEL", message: "Groq model is unavailable or not enabled for this key. Check GROQ_MODEL in Render.", ...detail };
+  if (status >= 500) return { status: 503, code: "GROQ_UPSTREAM", message: "Groq is temporarily unavailable. No trade was placed.", ...detail };
+  return { status: 503, code: "GROQ_REQUEST", message: "Groq rejected the request. See provider detail for the exact reason.", ...detail };
 }
 async function groqChat(payload) {
   if (!GROQ_API_KEY) throw Object.assign(new Error("Add GROQ_API_KEY to Render Environment, then redeploy."), { publicCode: "GROQ_KEY_MISSING" });
@@ -260,7 +262,7 @@ async function groqChat(payload) {
       await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
       continue;
     }
-    throw Object.assign(new Error(failure.message), { publicCode: failure.code });
+    throw Object.assign(new Error(failure.message), { publicCode: failure.code, providerStatus: failure.providerStatus, providerCode: failure.providerCode, providerMessage: failure.providerMessage });
   }
   throw Object.assign(new Error("Groq did not respond after retry. No trade was placed."), { publicCode: "GROQ_RETRY" });
 }
@@ -275,7 +277,7 @@ app.get("/api/ai/status", async (_req, res) => {
     if (response.ok) return res.json({ configured: true, healthy: true, provider: "Groq", model: GROQ_MODEL, message: "Groq connection healthy." });
     let body = {}; try { body = await response.json(); } catch {}
     const failure = groqFailure(response.status, body);
-    return res.status(failure.status).json({ configured: true, healthy: false, provider: "Groq", model: GROQ_MODEL, code: failure.code, message: failure.message });
+    return res.status(failure.status).json({ configured: true, healthy: false, provider: "Groq", model: GROQ_MODEL, code: failure.code, message: failure.message, providerStatus: failure.providerStatus, providerCode: failure.providerCode, providerMessage: failure.providerMessage });
   } catch (error) {
     return res.status(503).json({ configured: true, healthy: false, provider: "Groq", model: GROQ_MODEL, code: "GROQ_NETWORK", message: "Could not reach Groq. Check Render outbound connectivity." });
   }
@@ -292,7 +294,7 @@ app.post("/api/ai/analyze", express.json({limit:"32kb"}), async (req,res) => {
   const d=JSON.parse(b.choices?.[0]?.message?.content||"{}");
   if(!["CALL","PUT","HOLD"].includes(d.action)||!Number.isInteger(d.confidence)||d.confidence<0||d.confidence>100||typeof d.rationale!=="string"||!Array.isArray(d.risk_flags)) return res.status(502).json({error:"Invalid AI decision. No trade was placed.",code:"GROQ_INVALID_OUTPUT"});
   return res.json({...d,model:GROQ_MODEL,provider:"Groq"});
- } catch(e) { console.error("Groq analysis failed:",e.publicCode||e.message); return res.status(503).json({error:e.message||"Groq unavailable; no trade placed.",code:e.publicCode||"GROQ_FAILURE"}); }
+ } catch(e) { console.error("Groq analysis failed:", JSON.stringify({code:e.publicCode||"GROQ_FAILURE",providerStatus:e.providerStatus,providerCode:e.providerCode,providerMessage:e.providerMessage||e.message})); return res.status(503).json({error:e.message||"Groq unavailable; no trade placed.",code:e.publicCode||"GROQ_FAILURE",providerStatus:e.providerStatus,providerCode:e.providerCode,providerMessage:e.providerMessage}); }
 });
 
 app.post("/api/ai/command", express.json({limit:"8kb"}), async (req,res) => {
@@ -321,7 +323,7 @@ app.post("/api/ai/command", express.json({limit:"8kb"}), async (req,res) => {
     if(parsed.intent==="stop" && !/\b(stop|halt|disable|turn off|emergency)\b/i.test(command)) parsed.intent="configure";
     if(!["configure","start","stop","analyze"].includes(parsed.intent)||!["R_100","R_75","R_50","R_25","1HZ100V"].includes(parsed.symbol)||![1,3,5].includes(parsed.duration_minutes)||!Number.isFinite(parsed.stake)||parsed.stake<0.35||parsed.stake>100||!Number.isInteger(parsed.max_trades)||parsed.max_trades<1||parsed.max_trades>20||!Number.isFinite(parsed.loss_limit)||parsed.loss_limit<=0||!Number.isFinite(parsed.profit_target)||parsed.profit_target<=0) return res.status(502).json({error:"The AI returned invalid settings. No changes were made.",code:"GROQ_INVALID_OUTPUT"});
     return res.json({...parsed,model:GROQ_MODEL,mode:"demo-only"});
-  } catch(e) { console.error("Groq command parse failed:",e.publicCode||e.message); return res.status(503).json({error:e.message||"AI command service unavailable. No trade was placed.",code:e.publicCode||"GROQ_FAILURE"}); }
+  } catch(e) { console.error("Groq command parse failed:", JSON.stringify({code:e.publicCode||"GROQ_FAILURE",providerStatus:e.providerStatus,providerCode:e.providerCode,providerMessage:e.providerMessage||e.message})); return res.status(503).json({error:e.message||"AI command service unavailable. No trade was placed.",code:e.publicCode||"GROQ_FAILURE",providerStatus:e.providerStatus,providerCode:e.providerCode,providerMessage:e.providerMessage}); }
 });
 
 app.use(express.static(ROOT, {
