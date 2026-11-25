@@ -90,7 +90,7 @@
     <div class="chart-legend"><span>● LIVE DERIV PRICES</span><span id="chartLastUpdated">Awaiting data</span></div>
     <div class="exchange-orderbar"><div class="exchange-stake"><small>ORDER STAKE</small><b id="exchangeStakeValue">1.00</b><span id="exchangeCurrency">DEMO</span></div><button id="exchangeBuy" class="exchange-buy" disabled><small>BUY / CALL</small><b id="exchangeBuyPrice">—</b></button><button id="exchangeSell" class="exchange-sell" disabled><small>BUY / PUT</small><b id="exchangeSellPrice">—</b></button></div>
   </section>
-  <div class="trade-tabs"><button class="selected" data-order-tab="positions">Positions</button><button data-order-tab="pending">Pending orders</button></div>
+  <div class="trade-tabs"><button class="selected" data-order-tab="positions">Position</button><button data-order-tab="pending">Pending Order</button><button data-order-tab="weekly">Weekly Order</button></div>
   <section class="panel position-panel"><div class="panelHead"><div><span class="eyebrow">DERIV ACCOUNT</span><h2 id="positionsTitle">Open positions</h2></div><span id="positionsUpdated" class="subtle-pill">Not connected</span></div><div id="positionsList" class="account-list"><div class="feed-placeholder">Connect your Deriv Demo account to load positions.</div></div></section>
   <section id="execution" class="panel">
     <div class="panelHead"><div><span class="eyebrow">BOT CONTROL</span><h2>Automatic trading</h2></div><span id="modePill" class="pill">DEMO ONLY · LOCKED</span></div>
@@ -118,7 +118,7 @@
       <label>Contract duration<select id="duration"><option value="5">5 minutes</option><option value="3">3 minutes</option><option value="1">1 minute</option></select></label>
       <label>AI confidence minimum (%)<input id="aiConfidence" type="number" min="60" max="95" step="1" value="75"></label>
       <label>Max stake (% of balance)<input id="maxStakePercent" type="number" min="0.5" max="2" step="0.5" value="2"></label>
-      <label>Max trades per day<input id="maxTrades" type="number" min="1" max="100" value="5"></label>
+      <label>Max trades per day<input id="maxTrades" type="number" min="1" max="5000" value="1000"></label>
       <label>Daily loss limit<input id="lossLimit" type="number" min="0.01" step="0.01" value="5"></label>
       <label>Take-profit target<input id="profitTarget" type="number" min="0.01" step="0.01" value="3"></label>
       <label>Cooldown (minutes)<input id="cooldown" type="number" min="0" max="120" value="5"></label>
