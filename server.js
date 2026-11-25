@@ -318,16 +318,7 @@ app.post("/api/ai/command", express.json({limit:"8kb"}), async (req,res) => {
         {role:"system",content:"You are BONAGO, a cautious Deriv Demo trading-command parser. Return exactly one valid JSON object, with no Markdown or surrounding text. Required keys: intent, symbol, stake, duration_minutes, max_trades, loss_limit, profit_target, rationale. Convert the user's command into settings only. Never promise profit. Never select live trading. Set intent=trade_call only when the user explicitly asks to place/buy/open a CALL now; set intent=trade_put only when the user explicitly asks to place/buy/open a PUT now. A request to start automatic trading is intent=start, not a single trade. Never invent market prices or claim to have analysed live candles. Set intent=start ONLY if the user explicitly commands starting/activating/automatically trading now. intent=stop for explicit stop commands. intent=analyze for analyse/check/forecast requests. Otherwise configure. Supported symbols: R_100, R_75, R_50, R_25, 1HZ100V. timeframe is one-minute candles only (60 seconds). duration_minutes allowed 1,3,5. Stake must be 0.35 to 100, max_trades 1 to 20, loss_limit and profit_target 0.01 to 1000. Use conservative defaults when omitted: R_75, stake 1, duration 1, max_trades 3, loss_limit 3, profit_target 2. Never override user values with larger risk. If unclear, use defaults and explain assumptions. Return only schema."},
         {role:"user",content:command}
       ],
-      response_format:{type:"json_schema",json_schema:{name:"bonago_command",strict:true,schema:{type:"object",properties:{
-        intent:{type:"string",enum:["configure","start","stop","analyze","trade_call","trade_put"]},
-        symbol:{type:"string",enum:["R_100","R_75","R_50","R_25","1HZ100V"]},
-        stake:{type:"number",minimum:0.35,maximum:100},
-        duration_minutes:{type:"integer",enum:[1,3,5]},
-        max_trades:{type:"integer",minimum:1,maximum:20},
-        loss_limit:{type:"number",minimum:0.01,maximum:1000},
-        profit_target:{type:"number",minimum:0.01,maximum:1000},
-        rationale:{type:"string"}
-      },required:["intent","symbol","stake","duration_minutes","max_trades","loss_limit","profit_target","rationale"],additionalProperties:false}}}
+      response_format:{type:"json_object"}
     });
     const parsed=parseGroqJson(body.choices?.[0]?.message?.content);
     if(parsed.intent==="start" && !/\b(start|start trading|activate|enable|begin|trade automatically|turn on)\b/i.test(command)) parsed.intent="configure";
