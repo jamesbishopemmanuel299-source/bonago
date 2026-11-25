@@ -112,9 +112,11 @@
     render();
     if (!state.symbols.length) {setStatus("NO SYMBOLS · "+(Array.isArray(raw)?raw.length:0)+" RETURNED",false);console.warn("Deriv active_symbols returned no usable symbols",raw);return}
     setStatus("LIVE · "+state.symbols.length+" MARKETS",true);
-    // Deriv supports a symbol array for a single real-time tick subscription.
-    try { state.socket.send(JSON.stringify({ticks:state.symbols.map(s=>s.symbol),subscribe:1,req_id:2})); }
-    catch(e) { setStatus("SUBSCRIPTION ERROR",false); }
+    // Send one validated tick subscription per symbol to isolate unsupported symbols.
+    state.symbols.forEach((s, index) => {
+      try { state.socket.send(JSON.stringify({ ticks: s.symbol, subscribe: 1, req_id: 1000 + index })); }
+      catch (e) { console.error("Deriv tick subscription send failed:", s.symbol, e); setStatus("SUBSCRIPTION SEND FAILED · " + s.symbol, false); }
+    });
     const select=$("symbol");
     if(select){
       const current=select.value, frag=document.createDocumentFragment();
@@ -131,7 +133,14 @@
     ws.onopen=()=>{state.connected=true;state.retry=0;setStatus("LOADING DERIV SYMBOLS",true);ws.send(JSON.stringify({active_symbols:"brief",req_id:1}));};
     ws.onmessage=event=>{
       let data;try{data=JSON.parse(event.data)}catch{return}
-      if(data.error){setStatus("DERIV ERROR · "+String(data.error.code||"API"),false);console.warn("Deriv market feed:",data.error.message,data.error);return}
+      if(data.error){
+        const err=data.error;
+        setStatus("DERIV ERROR · "+String(err.code||"API")+" · "+String(err.message||"Unknown Deriv error"),false);
+        console.error("Deriv market feed error:", {code:err.code,message:err.message,echo_req:data.echo_req,req_id:data.req_id,raw:data});
+        const status=$("marketFeedStatus");
+        if(status) status.title="Code: "+(err.code||"unknown")+" | Message: "+(err.message||"Unknown")+" | Request: "+JSON.stringify(data.echo_req||{});
+        return;
+      }
       if(data.msg_type==="active_symbols" || data.active_symbols || data.activeSymbols)pickSymbols(data.active_symbols||data.activeSymbols||data?.data?.active_symbols||[]);
       if(data.msg_type==="tick"&&data.tick)updateQuote(data.tick);
     };
