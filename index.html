@@ -32,7 +32,7 @@
 </section>
 <section id="connection" class="panel">
   <div class="panelHead"><div><span class="section-kicker">01 / ACCOUNT</span><h2>Connect Deriv</h2></div><span class="secure-tag"><span class="secure-dot"></span> SERVER-SECURED</span></div>
-  <p class="panel-description">Choose the Deriv account you want BONAGO to monitor and connect.</p>
+  <p class="panel-description">Choose your Deriv Demo account. Real accounts are not available in this build.</p>
   <div class="grid two"><label>Deriv account<select id="derivAccount"><option value="">Loading accounts from Render secrets…</option></select></label><div class="message">BONAGO reads <b>DERIV_CLIENT_ID</b> and <b>DERIV_ACCESS_TOKEN</b> from your private Render environment. No token entry or OAuth sign-in is needed here.</div></div>
   <div class="actions"><button id="connectBtn" disabled>Connect selected account <span>→</span></button><button id="disconnectBtn" class="secondary" disabled>Disconnect</button></div>
   <p class="hint">Your access token stays on the server. BONAGO uses it to load Demo and Real accounts and request a short-lived WebSocket OTP. Never paste your token into this page.</p>
@@ -55,10 +55,10 @@
   <div class="strategy-note"><strong>Strategy logic</strong><span>CALL when fast EMA crosses above slow EMA; PUT on the reverse crossover. One open contract at a time. Settings do not guarantee profit.</span></div>
 </section>
 <section id="execution" class="panel execution-panel">
-  <div class="panelHead"><div><span class="section-kicker">03 / CONTROL CENTER</span><h2>Execution controls</h2></div><span id="modePill" class="pill">DEMO ONLY</span></div>
-  <div class="mode-warning"><strong>Live trading protection</strong><span>Real-money execution stays locked until you enable Live mode and confirm the risk warning.</span></div>
-  <label class="toggle"><input id="liveMode" type="checkbox"><span>Enable LIVE account mode</span></label>
-  <label class="toggle"><input id="liveConfirm" type="checkbox"><span>I understand live trades can lose money and authorize this bot to place real-money trades when I start it.</span></label>
+  <div class="panelHead"><div><span class="section-kicker">03 / CONTROL CENTER</span><h2>Execution controls</h2></div><span id="modePill" class="pill">DEMO ONLY · LOCKED</span></div>
+  <div class="mode-warning"><strong>Demo-only safety lock</strong><span>This BONAGO deployment accepts Demo accounts only. Real accounts are filtered out and rejected by the server.</span></div>
+  <label class="toggle"><input id="liveMode" type="checkbox" disabled><span>LIVE account mode — disabled</span></label>
+  <label class="toggle"><input id="liveConfirm" type="checkbox" disabled><span>Live trading authorization — unavailable in this build.</span></label>
   <div class="actions"><button id="startBtn" disabled>▶ Start automatic trading</button><button id="stopBtn" class="danger" disabled>■ Stop bot</button><button id="panicBtn" class="secondary">Emergency disconnect</button></div>
   <div id="botMessage" class="message status-message">Connect a demo account to begin.</div>
 </section>
