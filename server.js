@@ -110,6 +110,60 @@ app.get("/auth/deriv/callback", async (req, res) => {
   }
 });
 
+function getDerivSession(req) {
+  const sid = verifyCookie(cookieValue(req, "bonago_sid"));
+  const session = sid && sessions.get(sid);
+  if (!session || session.expiresAt <= Date.now()) {
+    if (sid) sessions.delete(sid);
+    return null;
+  }
+  return session;
+}
+
+app.get("/api/deriv/accounts", async (req, res) => {
+  const session = getDerivSession(req);
+  if (!session) return res.status(401).json({ error: "Connect your Deriv account first." });
+  try {
+    const response = await fetch("https://api.derivws.com/trading/v1/options/accounts", {
+      headers: { Authorization: "Bearer " + session.accessToken }
+    });
+    const body = await response.json();
+    if (!response.ok) return res.status(response.status).json({ error: body.errors?.[0]?.message || "Could not load Deriv accounts." });
+    const raw = body.data?.accounts || body.data || [];
+    const accounts = (Array.isArray(raw) ? raw : []).map(account => ({
+      account_id: account.account_id || account.id,
+      account_type: account.account_type || account.account_category || (account.is_virtual ? "demo" : "real"),
+      currency: account.currency || "USD",
+      balance: Number(account.balance || 0),
+      loginid: account.loginid || account.account_id || account.id,
+      is_virtual: account.is_virtual === true || String(account.account_type || account.account_category || "").toLowerCase() === "demo"
+    })).filter(account => account.account_id);
+    return res.json({ accounts });
+  } catch (error) {
+    console.error("Deriv accounts request failed:", error.message);
+    return res.status(502).json({ error: "Could not reach Deriv account service." });
+  }
+});
+
+app.post("/api/deriv/otp", express.json(), async (req, res) => {
+  const session = getDerivSession(req);
+  if (!session) return res.status(401).json({ error: "Your Deriv session has expired. Connect again." });
+  const accountId = String(req.body?.accountId || "");
+  if (!/^[A-Za-z0-9_-]{4,64}$/.test(accountId)) return res.status(400).json({ error: "Choose a valid Deriv account." });
+  try {
+    const response = await fetch("https://api.derivws.com/trading/v1/options/accounts/" + encodeURIComponent(accountId) + "/otp", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + session.accessToken }
+    });
+    const body = await response.json();
+    if (!response.ok || !body.data?.url) return res.status(response.status || 502).json({ error: body.errors?.[0]?.message || "Could not create an authenticated Deriv connection." });
+    return res.json({ url: body.data.url });
+  } catch (error) {
+    console.error("Deriv OTP request failed:", error.message);
+    return res.status(502).json({ error: "Could not reach Deriv authentication service." });
+  }
+});
+
 app.get("/api/deriv/status", (req, res) => {
   const sid = verifyCookie(cookieValue(req, "bonago_sid"));
   const session = sid && sessions.get(sid);
