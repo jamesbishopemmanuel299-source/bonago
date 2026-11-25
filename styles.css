@@ -361,3 +361,17 @@ footer{border-color:#263750}
  .chart-timeframes button{padding:10px 12px 9px;font-size:11px}
  .exchange-orderbar{bottom:66px}
 }
+
+.position-detail-card{background:#0c1521;border:1px solid #26384d;border-radius:13px;padding:14px;margin:10px 0}
+.position-detail-head{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13px}
+.position-detail-head .positive{color:#43d39e}.position-detail-head .negative{color:#ff6574}
+.position-detail-direction{font-size:10px;color:#a8b6c8;margin:8px 0 12px;line-height:1.5}
+.position-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 0;border-top:1px solid #26313e;border-bottom:1px solid #26313e}
+.position-detail-cell small,.position-detail-cell b{display:block}
+.position-detail-cell small{font-size:9px;color:#8392a5;margin-bottom:5px}
+.position-detail-cell b{font-size:10px;overflow-wrap:anywhere}
+.position-detail-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:13px}
+.position-detail-actions button{min-height:42px;border-radius:9px;border:1px solid #3473bd;background:transparent;color:#dceaff;font-weight:800;font-size:10px}
+.position-detail-actions button:nth-child(2){border-color:#268d70;color:#7de0b9}
+.position-detail-actions .position-close{border-color:#bd5261;color:#ff9eaa}
+@media(max-width:520px){.position-detail-grid{gap:10px}.position-detail-actions button{font-size:9px;padding:0 4px}}
