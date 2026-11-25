@@ -9,6 +9,7 @@ const DERIV_CLIENT_ID = process.env.DERIV_CLIENT_ID || "";
 const DERIV_ACCESS_TOKEN = process.env.DERIV_ACCESS_TOKEN || "";
 const DERIV_REDIRECT_URI = process.env.DERIV_REDIRECT_URI || "https://bonago-1.onrender.com/auth/deriv/callback";
 const SESSION_SECRET = process.env.SESSION_SECRET || "";
+const DEMO_ONLY = true; // Server-enforced: this deployment cannot authorize Real accounts.
 
 // Deriv PAT requests require Deriv-App-ID. For this deployment, use the configured
 // client/app identifier without exposing it to the browser.
@@ -56,13 +57,15 @@ app.get("/health", (_req, res) => res.status(200).json({
   ok: true,
   service: "BONAGO",
   derivOAuthConfigured: Boolean(DERIV_CLIENT_ID && SESSION_SECRET),
-  derivSecretConfigured: Boolean(DERIV_CLIENT_ID && DERIV_ACCESS_TOKEN)
+  derivSecretConfigured: Boolean(DERIV_CLIENT_ID && DERIV_ACCESS_TOKEN),
+  mode: "demo-only"
 }));
 
 // OAuth client configuration stays on the server. The client ID is public OAuth metadata;
 // access tokens and PKCE verifiers are never returned by this endpoint.
 app.get("/api/config", (_req, res) => res.json({
   derivOAuthConfigured: Boolean(DERIV_CLIENT_ID && SESSION_SECRET),
+  mode: "demo-only",
   redirectUri: DERIV_REDIRECT_URI
 }));
 
@@ -154,8 +157,8 @@ app.get("/api/deriv/accounts", async (req, res) => {
       balance: Number(account.balance || 0),
       loginid: account.loginid || account.account_id || account.id,
       is_virtual: account.is_virtual === true || String(account.account_type || account.account_category || "").toLowerCase() === "demo"
-    })).filter(account => account.account_id);
-    return res.json({ accounts });
+    })).filter(account => account.account_id && account.is_virtual);
+    return res.json({ accounts, mode: "demo-only" });
   } catch (error) {
     console.error("Deriv accounts request failed:", error.message);
     return res.status(502).json({ error: "Could not reach Deriv account service." });
@@ -166,8 +169,19 @@ app.post("/api/deriv/otp", express.json(), async (req, res) => {
   const session = getDerivSession(req);
   if (!session) return res.status(401).json({ error: "Your Deriv session has expired. Connect again." });
   const accountId = String(req.body?.accountId || "");
-  if (!/^[A-Za-z0-9_-]{4,64}$/.test(accountId)) return res.status(400).json({ error: "Choose a valid Deriv account." });
+  if (!/^[A-Za-z0-9_-]{4,64}$/.test(accountId)) return res.status(400).json({ error: "Choose a valid Deriv Demo account." });
   try {
+    // Re-check account type on the server; never trust the browser's selected account or mode.
+    const accountsResponse = await fetch("https://api.derivws.com/trading/v1/options/accounts", {
+      headers: derivHeaders(session.accessToken)
+    });
+    const accountsBody = await accountsResponse.json();
+    if (!accountsResponse.ok) return res.status(502).json({ error: "Could not verify the selected Deriv account type." });
+    const rawAccounts = accountsBody.data?.accounts || accountsBody.data || [];
+    const selected = (Array.isArray(rawAccounts) ? rawAccounts : []).find(a => String(a.account_id || a.id || "") === accountId);
+    const isVirtual = selected && (selected.is_virtual === true || String(selected.account_type || selected.account_category || "").toLowerCase() === "demo");
+    if (DEMO_ONLY && !isVirtual) return res.status(403).json({ error: "BONAGO is locked to Demo accounts. Real-account connections are disabled." });
+    if (!selected) return res.status(404).json({ error: "The selected account was not found on this Deriv login." });
     const response = await fetch("https://api.derivws.com/trading/v1/options/accounts/" + encodeURIComponent(accountId) + "/otp", {
       method: "POST",
       headers: derivHeaders()
