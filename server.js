@@ -176,6 +176,10 @@ app.get("/api/deriv/accounts", async (req, res) => {
         loginid: account.loginid || account.account_id || account.id,
         is_virtual: account.is_virtual === true || String(account.account_type || account.account_category || "").toLowerCase() === "demo"
       })).filter(account => account.account_id && account.is_virtual);
+      if (!accounts.length && candidates.indexOf(session) < candidates.length - 1) {
+        console.warn("No Demo accounts found for token; trying next configured token:", session.tokenSource);
+        continue;
+      }
       return res.json({ accounts, mode: "demo-only", tokenSource: session.tokenSource || "oauth-session", liveTokenConfigured: Boolean(DERIV_ACCESS_TOKEN), demoFallbackConfigured: Boolean(DERIV_DEMO_ACCESS_TOKEN) });
     } catch (error) {
       lastFailure = { error };
