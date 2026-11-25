@@ -15,12 +15,12 @@ const DEMO_ONLY = true; // Server-enforced: this deployment cannot authorize Rea
 const RENDER_TOKEN_SOURCE = DERIV_ACCESS_TOKEN ? "render-live-token" : (DERIV_DEMO_ACCESS_TOKEN ? "render-demo-fallback" : "oauth-session");
 
 // Deriv PAT requests require the numeric Deriv-App-ID. OAuth tokens do not need it.
-function derivHeaders(accessToken, extra = {}) {
+function derivHeaders(accessToken, extra = {}, isPat = true) {
   // Deriv requires Deriv-App-ID for PATs only. OAuth access tokens already
   // identify the app; never send the OAuth Client ID as a Deriv-App-ID header.
   return {
     Authorization: "Bearer " + accessToken,
-    ...(DERIV_APP_ID ? { "Deriv-App-ID": DERIV_APP_ID } : {}),
+    ...(isPat && DERIV_APP_ID ? { "Deriv-App-ID": DERIV_APP_ID } : {}),
     ...extra
   };
 }
@@ -172,7 +172,7 @@ app.get("/api/deriv/accounts", async (req, res) => {
   for (const session of candidates) {
     try {
       const response = await fetch("https://api.derivws.com/trading/v1/options/accounts", {
-        headers: derivHeaders(session.accessToken), signal: AbortSignal.timeout(10000)
+        headers: derivHeaders(session.accessToken, {}, session.tokenSource !== "oauth-session"), signal: AbortSignal.timeout(10000)
       });
       const body = await response.json();
       if (!response.ok) {
@@ -215,7 +215,7 @@ app.post("/api/deriv/otp", express.json(), async (req, res) => {
     let session = null, selected = null;
     for (const candidate of candidates) {
       const accountsResponse = await fetch("https://api.derivws.com/trading/v1/options/accounts", {
-        headers: derivHeaders(candidate.accessToken), signal: AbortSignal.timeout(10000)
+        headers: derivHeaders(candidate.accessToken, {}, candidate.tokenSource !== "oauth-session"), signal: AbortSignal.timeout(10000)
       });
       const accountsBody = await accountsResponse.json();
       if (!accountsResponse.ok) continue;
