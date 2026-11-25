@@ -17,3 +17,9 @@ services:
         sync: false
       - key: DERIV_DEMO_ACCESS_TOKEN
         sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: openai/gpt-oss-120b
