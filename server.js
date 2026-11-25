@@ -112,6 +112,7 @@ app.get("/auth/deriv/callback", async (req, res) => {
 });
 
 function getDerivSession(req) {
+  if (DERIV_CLIENT_ID && DERIV_ACCESS_TOKEN) return { accessToken: DERIV_ACCESS_TOKEN, expiresAt: Number.MAX_SAFE_INTEGER };
   const sid = verifyCookie(cookieValue(req, "bonago_sid"));
   const session = sid && sessions.get(sid);
   if (!session || session.expiresAt <= Date.now()) {
@@ -166,6 +167,7 @@ app.post("/api/deriv/otp", express.json(), async (req, res) => {
 });
 
 app.get("/api/deriv/status", (req, res) => {
+  if (DERIV_CLIENT_ID && DERIV_ACCESS_TOKEN) return res.json({ connected: true, source: "render-secrets" });
   const sid = verifyCookie(cookieValue(req, "bonago_sid"));
   const session = sid && sessions.get(sid);
   if (!session || session.expiresAt <= Date.now()) {
