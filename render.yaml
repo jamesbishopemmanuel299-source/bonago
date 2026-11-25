@@ -11,5 +11,7 @@ services:
         value: production
       - key: DERIV_CLIENT_ID
         sync: false
+      - key: DERIV_APP_ID
+        sync: false
       - key: DERIV_ACCESS_TOKEN
         sync: false
