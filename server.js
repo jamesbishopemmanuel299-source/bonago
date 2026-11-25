@@ -9,6 +9,16 @@ const DERIV_CLIENT_ID = process.env.DERIV_CLIENT_ID || "";
 const DERIV_ACCESS_TOKEN = process.env.DERIV_ACCESS_TOKEN || "";
 const DERIV_REDIRECT_URI = process.env.DERIV_REDIRECT_URI || "https://bonago-1.onrender.com/auth/deriv/callback";
 const SESSION_SECRET = process.env.SESSION_SECRET || "";
+
+// Deriv PAT requests require Deriv-App-ID. For this deployment, use the configured
+// client/app identifier without exposing it to the browser.
+function derivHeaders(extra = {}) {
+  return {
+    Authorization: "Bearer " + DERIV_ACCESS_TOKEN,
+    ...(DERIV_CLIENT_ID ? { "Deriv-App-ID": DERIV_CLIENT_ID } : {}),
+    ...extra
+  };
+}
 const pendingOAuth = new Map();
 const sessions = new Map();
 
@@ -128,10 +138,14 @@ app.get("/api/deriv/accounts", async (req, res) => {
   if (!session) return res.status(401).json({ error: "Connect your Deriv account first." });
   try {
     const response = await fetch("https://api.derivws.com/trading/v1/options/accounts", {
-      headers: { Authorization: "Bearer " + session.accessToken }
+      headers: derivHeaders()
     });
     const body = await response.json();
-    if (!response.ok) return res.status(response.status).json({ error: body.errors?.[0]?.message || "Could not load Deriv accounts." });
+    if (!response.ok) {
+      const message = body.errors?.[0]?.message || "Could not load Deriv accounts.";
+      console.error("Deriv accounts API rejected request:", response.status, message);
+      return res.status(response.status).json({ error: message, code: body.errors?.[0]?.code || "DerivAPIError", upstreamStatus: response.status });
+    }
     const raw = body.data?.accounts || body.data || [];
     const accounts = (Array.isArray(raw) ? raw : []).map(account => ({
       account_id: account.account_id || account.id,
@@ -156,10 +170,14 @@ app.post("/api/deriv/otp", express.json(), async (req, res) => {
   try {
     const response = await fetch("https://api.derivws.com/trading/v1/options/accounts/" + encodeURIComponent(accountId) + "/otp", {
       method: "POST",
-      headers: { Authorization: "Bearer " + session.accessToken }
+      headers: derivHeaders()
     });
     const body = await response.json();
-    if (!response.ok || !body.data?.url) return res.status(response.status || 502).json({ error: body.errors?.[0]?.message || "Could not create an authenticated Deriv connection." });
+    if (!response.ok || !body.data?.url) {
+      const message = body.errors?.[0]?.message || "Could not create an authenticated Deriv connection.";
+      console.error("Deriv OTP API rejected request:", response.status, message);
+      return res.status(response.status || 502).json({ error: message, code: body.errors?.[0]?.code || "DerivOTPError", upstreamStatus: response.status });
+    }
     return res.json({ url: body.data.url });
   } catch (error) {
     console.error("Deriv OTP request failed:", error.message);
