@@ -1,5 +1,5 @@
 const $=id=>document.getElementById(id);
-let ws=null,req=0,pending=new Map(),authorized=null,accountBalance=0,botRunning=false,historySub=null,tickSub=null,openContract=null,lastCandleEpoch=null,sessionProfit=0,tradeCount=0,winCount=0,lossCount=0,lastTradeAt=0,prices=[],candleData=[],lastFast=null,lastSlow=null,sessionStart=0,portfolioRows=[],transactionSub=null;
+let ws=null,req=0,pending=new Map(),authorized=null,accountBalance=0,botRunning=false,historySub=null,tickSub=null,openContract=null,lastCandleEpoch=null,sessionProfit=0,tradeCount=0,winCount=0,lossCount=0,lastTradeAt=0,prices=[],candleData=[],lastFast=null,lastSlow=null,sessionStart=0,portfolioRows=[],transactionSub=null,aiRequestInFlight=false;
 const log=(m)=>{const row=document.createElement("div");row.className="logrow";row.textContent=new Date().toLocaleTimeString()+" — "+m;$("log").prepend(row)};
 function setMsg(id,m){$(id).textContent=m}
 function syncBalances(){const value=authorized?accountBalance.toFixed(2)+" "+authorized.currency:"—";for(const id of ["balance","assetsBalance","tradeAccountBalance"]){const el=$(id);if(el)el.textContent=value}const market=$("marketAccountBalance");if(market)market.textContent="Balance "+value;const type=authorized?(authorized.is_virtual?"Demo":"Real")+" account · "+authorized.loginid:"Not connected";if($("accountType"))$("accountType").textContent=type;if($("assetsAccountType"))$("assetsAccountType").textContent=type;}
@@ -66,10 +66,10 @@ async function onCandle(c){
  const epoch=Number(c.epoch),close=Number(c.close); if(!Number.isFinite(close)||epoch===lastCandleEpoch)return; lastCandleEpoch=epoch;
  const candle={open:Number(c.open),high:Number(c.high),low:Number(c.low),close}; if(!Object.values(candle).every(Number.isFinite))return;
  prices.push(close);prices=prices.slice(-150);candleData.push(candle);candleData=candleData.slice(-60); if(candleData.length<20)return;
- if(openContract){log("AI skipped: one contract is already open.");return}
+ if(openContract){log("AI skipped: one contract is already open.");return} if(aiRequestInFlight)return;
  if(Date.now()-lastTradeAt<Number($("cooldown").value)*60000)return;
  if(tradeCount>=Number($("maxTrades").value)||sessionProfit<=-Number($("lossLimit").value)||sessionProfit>=Number($("profitTarget").value)){stopBot("Session risk limit reached.");return}
- setMsg("botMessage","Groq GPT-OSS 120B analysing market candles…");
+ aiRequestInFlight=true; setMsg("botMessage","Groq GPT-OSS 120B analysing market candles…");
  try {
   const r=await fetch("/api/ai/analyze",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({symbol:$("symbol").value,candles:candleData.slice(-60)})});
   const d=await r.json(); if(!r.ok)throw Error(d.error||"AI analysis failed");
@@ -78,7 +78,8 @@ async function onCandle(c){
   if(!botRunning||openContract)return;
   setMsg("botMessage","AI signal "+d.action+" ("+d.confidence+"%). Applying risk controls…");
   placeTrade(d.action).catch(e=>{log("Trade failed: "+e.message);setMsg("botMessage","Trade failed: "+e.message)});
- } catch(e) { log("AI unavailable: "+e.message);setMsg("botMessage","AI unavailable — no trade placed. "+e.message); }
+ } catch(e) { log("EMERGENCY STOP — AI unavailable: "+e.message); stopBot("Emergency disconnect: AI unavailable. No trade placed. "+e.message); }
+ finally { aiRequestInFlight=false; }
 }
 async function placeTrade(direction){if(!botRunning||openContract)return;const balance=accountBalance;const requested=Number($("stake").value);const stake=Math.min(requested,Math.max(0, balance*0.05));if(stake<=0)throw Error("Insufficient balance for a safe stake.");if(stake<requested)log("Stake capped to 5% of the displayed account balance: "+stake.toFixed(2));const p=await send({proposal:1,amount:Number(stake.toFixed(2)),basis:"stake",contract_type:direction,currency:authorized.currency,duration:Number($("duration").value),duration_unit:"m",underlying_symbol:$("symbol").value});if(!p.proposal?.id)throw Error("No valid price proposal returned.");const b=await send({buy:p.proposal.id,price:Number(p.proposal.ask_price)});if(!b.buy?.contract_id)throw Error("Deriv did not confirm the purchase.");openContract=b.buy.contract_id;lastTradeAt=Date.now();await refreshPortfolio();log("PURCHASED "+direction+" · contract "+openContract+" · stake "+stake.toFixed(2)+" "+authorized.currency);setMsg("botMessage","Trade placed: "+direction+". Monitoring contract "+openContract+".");await send({proposal_open_contract:1,contract_id:openContract,subscribe:1})}
 function stopBot(reason="Bot stopped by user."){botRunning=false;$("botStatus").textContent="STOPPED";$("startBtn").disabled=!authorized;$("stopBtn").disabled=true;setMsg("botMessage",reason);log(reason);if(historySub&&ws&&ws.readyState===1){send({forget:historySub}).catch(()=>{});historySub=null}}
