@@ -233,3 +233,54 @@ input,select,textarea{min-height:44px;border-radius:11px}
   .bottom-nav button b{font-size:8px}
 }
 @media(prefers-reduced-motion:reduce){.actions button:active,.primary:active,.ghost:active,.manual-actions button:active{transform:none}}
+
+
+/* BONAGO Pro terminal — BtcDana-inspired responsive trading workspace */
+:root{--bg:#080d16;--panel:#101a2a;--panel2:#152238;--line:#263750;--blue:#2477ff;--green:#13c995;--red:#f05d72;--muted:#8fa1b8}
+body{background:radial-gradient(ellipse at 72% -18%,#17345b 0,transparent 38%),#080d16;color:#edf4ff;padding-bottom:32px}
+.app-shell{max-width:none;width:100%;min-height:100vh;border:0}
+.mobile-top{height:68px;padding:0 30px;background:#0b1422ed;border-bottom:1px solid #23334a;backdrop-filter:blur(18px)}
+.brand{letter-spacing:.08em}.brand-mark{border-radius:10px;background:linear-gradient(145deg,#4c9cff,#1559df);box-shadow:0 7px 22px #1765ed55}
+.main-content{width:min(1500px,calc(100% - 270px));margin:0 auto 0 250px;padding:30px 34px 48px}
+.page.active-page{animation:terminalIn .22s ease}
+@keyframes terminalIn{from{opacity:.6;transform:translateY(5px)}to{opacity:1;transform:none}}
+.bottom-nav{position:fixed;left:0;top:68px;bottom:0;transform:none;width:220px;display:flex;flex-direction:column;justify-content:flex-start;gap:7px;padding:24px 13px;background:#0b1422;border:0;border-right:1px solid #22334a;border-radius:0;box-shadow:none;backdrop-filter:none}
+.bottom-nav:before{content:"WORKSPACE";display:block;color:#627894;font-size:9px;font-weight:800;letter-spacing:.18em;padding:0 14px 12px}
+.bottom-nav button{min-height:47px;display:flex;flex-direction:row;justify-content:flex-start;gap:13px;padding:0 14px;border:1px solid transparent;border-radius:11px;color:#93a6c0}
+.bottom-nav button span{width:22px;text-align:center;font-size:18px}
+.bottom-nav button b{font-size:11px;font-weight:700}
+.bottom-nav button.active{color:#fff;background:linear-gradient(100deg,#173a69,#142a48);border-color:#2d5687}
+.bottom-nav button.active span{filter:drop-shadow(0 0 7px #377bff)}
+.page-heading,.welcome-row{margin-bottom:22px}
+.welcome-row h1,.page-heading h1{font-size:30px;letter-spacing:-.045em}
+.eyebrow{color:#83a6d4;letter-spacing:.16em}
+.demo-chip{background:#163b35;color:#65e6bc;border:1px solid #236653}
+.badge.off{background:#3a202b;border:1px solid #6b3546}.badge.on{background:#123a32;border:1px solid #216b57}
+.hero-balance{background:linear-gradient(115deg,#123c75,#10294c 55%,#111f37);border:1px solid #2b5b98;border-radius:18px;padding:25px 28px;box-shadow:0 18px 50px #02071188}
+.hero-balance>strong{font-size:42px}.balance-head{color:#b7d2f8}
+.quick-grid{gap:12px}.quick-action{background:#101b2b;border-color:#263b57;transition:.18s ease}.quick-action:hover{transform:translateY(-2px);border-color:#3b78c2;background:#14243a}
+.market-card,.market-list,.panel,.mini-stat,.trade-summary>div,.assets-overview{background:#101a29;border-color:#263a55}
+.market-row{border-color:#22334a}.market-row:hover{background:#14243a}
+.market-tabs button.selected,.trade-tabs button.selected{color:#79b1ff;border-bottom-color:#3989ff}
+.primary,.actions button{background:linear-gradient(110deg,#287cff,#1760df);border-color:#3988ff;box-shadow:0 5px 16px #155bd033}
+.primary:hover,.actions button:hover{filter:brightness(1.1)}
+.ghost,.actions .secondary{background:#1a2b43;border-color:#345071;color:#dceaff}
+input,select{background:#0a1422;border-color:#2a405d}
+input:focus,select:focus{outline-color:#3988ff}
+.search-box{background:#101b2b;border-color:#2a405d}
+.panel{border-radius:15px;box-shadow:0 8px 24px #02071133}
+.assets-overview{background:linear-gradient(135deg,#123c75,#112642);border-color:#2e5b91}
+.empty-state{background:#0d1726;border-color:#2a405d}
+footer{border-color:#263750}
+@media(max-width:760px){
+ body{padding-bottom:96px}
+ .mobile-top{padding:0 15px}
+ .main-content{width:100%;margin:0;padding:20px 14px 32px}
+ .bottom-nav{left:50%;top:auto;bottom:max(10px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(620px,calc(100% - 20px));height:auto;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));flex-direction:row;gap:0;padding:7px 5px;background:#101b2bed;border:1px solid #30445f;border-radius:19px;box-shadow:0 10px 35px #0009;backdrop-filter:blur(18px)}
+ .bottom-nav:before{display:none}
+ .bottom-nav button{min-height:46px;flex-direction:column;justify-content:center;gap:3px;padding:4px 1px;border-radius:12px}
+ .bottom-nav button span{width:auto;font-size:18px}.bottom-nav button b{font-size:8px}
+ .welcome-row h1,.page-heading h1{font-size:25px}
+ .hero-balance{padding:19px}.hero-balance>strong{font-size:34px}
+}
+@media(min-width:761px){.quick-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.performance-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
