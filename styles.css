@@ -284,3 +284,8 @@ footer{border-color:#263750}
  .hero-balance{padding:19px}.hero-balance>strong{font-size:34px}
 }
 @media(min-width:761px){.quick-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.performance-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* Dynamic all-market selection */
+.selected-market-card{display:flex;flex-direction:column;gap:5px;justify-content:center;min-height:64px;padding:11px 13px;border:1px solid #31547c;border-radius:11px;background:linear-gradient(135deg,#142d4b,#101b2a)}
+.selected-market-card small{font-size:9px;letter-spacing:.14em;color:#83a6d4}.selected-market-card b{font-size:13px;color:#eef5ff}.selected-market-card span{font-size:10px;color:#91a5bf}
+.market-row{cursor:pointer}.market-row.market-selected{background:#17385d;border-color:#4d91e9}.market-row:focus-visible{outline:2px solid #83b5ff}
