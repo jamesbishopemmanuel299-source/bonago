@@ -14,8 +14,7 @@ const SESSION_SECRET = process.env.SESSION_SECRET || "";
 const DEMO_ONLY = true; // Server-enforced: this deployment cannot authorize Real accounts.
 const RENDER_TOKEN_SOURCE = DERIV_ACCESS_TOKEN ? "render-live-token" : (DERIV_DEMO_ACCESS_TOKEN ? "render-demo-fallback" : "oauth-session");
 
-// Deriv PAT requests require Deriv-App-ID. For this deployment, use the configured
-// client/app identifier without exposing it to the browser.
+// Deriv PAT requests require the numeric Deriv-App-ID. OAuth tokens do not need it.
 function derivHeaders(accessToken, extra = {}) {
   // Deriv requires Deriv-App-ID for PATs only. OAuth access tokens already
   // identify the app; never send the OAuth Client ID as a Deriv-App-ID header.
@@ -74,7 +73,7 @@ app.get("/health", (_req, res) => res.status(200).json({
 // access tokens and PKCE verifiers are never returned by this endpoint.
 app.get("/api/config", (_req, res) => res.json({
   derivOAuthConfigured: Boolean(DERIV_CLIENT_ID && SESSION_SECRET),
-  derivAppIdConfigured: Boolean(DERIV_APP_ID || DERIV_CLIENT_ID),
+  derivAppIdConfigured: Boolean(DERIV_APP_ID),
   derivLiveTokenConfigured: Boolean(DERIV_ACCESS_TOKEN),
   derivDemoFallbackConfigured: Boolean(DERIV_DEMO_ACCESS_TOKEN),
   tokenSource: RENDER_TOKEN_SOURCE,
