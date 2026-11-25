@@ -45,7 +45,6 @@
     price.append(quote,time);
     const change = document.createElement("span"); change.className = "change neutral"; change.textContent = "LIVE";
     wrap.append(icon,name,price,change);
-    state.nodes.set(symbol.symbol,{quote,time,change});
     return wrap;
   }
   function updateQuote(tick) {
@@ -55,8 +54,8 @@
     const quote = Number(tick.quote), prior = state.quotes.get(symbol);
     if (!prior) state.quotes.set(symbol,{first:quote,last:quote,epoch:Number(tick.epoch||0)});
     else { prior.last=quote; prior.epoch=Number(tick.epoch||prior.epoch); }
-    const q = state.quotes.get(symbol), node = state.nodes.get(symbol);
-    if (node) {
+    const q = state.quotes.get(symbol);
+    for (const node of (state.nodes.get(symbol)||[])) {
       node.quote.textContent = priceText(quote,meta.pip);
       node.time.textContent = q.epoch ? new Date(q.epoch*1000).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"}) : "Live from Deriv";
       if (q.first && q.first !== quote) {
@@ -97,7 +96,8 @@
       const s=state.symbols.find(x=>x.symbol===row.dataset.symbol);
       if(!s)return;
       const children=row.children;
-      state.nodes.set(s.symbol,{quote:children[2].querySelector("b"),time:children[2].querySelector("small"),change:children[3]});
+      const refs={quote:children[2].querySelector("b"),time:children[2].querySelector("small"),change:children[3]};
+      const existing=state.nodes.get(s.symbol)||[];existing.push(refs);state.nodes.set(s.symbol,existing);
       const q=state.quotes.get(s.symbol);if(q)updateQuote({symbol:s.symbol,quote:q.last,epoch:q.epoch});
     });
   }
