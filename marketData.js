@@ -123,6 +123,8 @@
       state.symbols.forEach(s=>{const o=document.createElement("option");o.value=s.symbol;o.textContent=(s.display_name||s.symbol)+" ("+s.symbol+") · "+categoryLabel(categoryOf(s));frag.append(o)});
       select.replaceChildren(frag);
       select.value=state.symbols.some(s=>s.symbol===current)?current:(state.symbols.find(s=>s.symbol==="R_75")?.symbol||state.symbols[0].symbol);
+      const chatSelect=$("chatMarketSelect");
+      if(chatSelect){chatSelect.replaceChildren(...[...select.options].map(option=>option.cloneNode(true)));chatSelect.value=select.value;}
       select.dispatchEvent(new Event("change",{bubbles:true}));
     }
   }
