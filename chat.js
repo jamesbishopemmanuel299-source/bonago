@@ -3,6 +3,7 @@
  const $=id=>document.getElementById(id);
  const messages=$("assistantMessages"),input=$("assistantCommand"),send=$("sendCommand");
  function addMessage(role,text){const el=document.createElement("div");el.className="chat-message "+role;el.textContent=text;messages.append(el);messages.scrollTop=messages.scrollHeight;return el}
+ async function checkAI(){const el=$("aiConnectionStatus");if(!el)return;try{const r=await fetch("/api/ai/status",{cache:"no-store",credentials:"same-origin"});const d=await r.json();el.textContent=d.healthy?"● GROQ ONLINE":"● GROQ OFFLINE";el.title=d.message||"Groq status";el.style.opacity=d.healthy?"1":"0.8";}catch{el.textContent="● GROQ UNREACHABLE";}}
  function syncStats(){const s=window.BONAGO?.getState?.();if(!s)return;$("chatPL").textContent=(s.sessionProfit>=0?"+":"")+s.sessionProfit.toFixed(2)+(s.authorized?.currency?" "+s.authorized.currency:"");$("chatPL").style.color=s.sessionProfit>=0?"#54d6a5":"#ff8798";$("chatTrades").textContent=String(s.tradeCount);$("chatWinRate").textContent=(s.tradeCount?(s.winCount/s.tradeCount*100):0).toFixed(1)+"%";$("chatOpen").textContent=String(s.openPositions);$("chatBalance").textContent=s.authorized?s.accountBalance.toFixed(2)+" "+s.authorized.currency:"—";$("chatBotState").textContent=(s.botRunning?"BOT RUNNING":"BOT STOPPED")+" · DEMO"}
  async function submit(){const command=input.value.trim();if(!command)return;input.value="";addMessage("user",command);const wait=addMessage("assistant","Interpreting your command with Groq GPT-OSS 120B…");send.disabled=true;
  try{const r=await fetch("/api/ai/command",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({command})});const d=await r.json();if(!r.ok)throw Error(d.error||"Command failed");wait.remove();
@@ -18,5 +19,5 @@
  send.addEventListener("click",submit);input.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();submit()}});
  document.querySelectorAll("[data-prompt]").forEach(b=>b.addEventListener("click",()=>{input.value=b.dataset.prompt;submit()}));
  $("newChat").addEventListener("click",()=>{messages.replaceChildren();addMessage("assistant","New conversation started. Paste a Demo trading command when ready.");});
- setInterval(syncStats,1000);syncStats();
+ setInterval(syncStats,1000);syncStats();checkAI();setInterval(checkAI,30000);
 })();
