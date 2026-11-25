@@ -1,7 +1,7 @@
 (() => {
   const ENDPOINT = "wss://api.derivws.com/trading/v1/options/ws/public";
   const MAX_MARKETS = 500;
-  const state = { socket: null, symbols: [], quotes: new Map(), nodes: new Map(), filter: "all", search: "", retry: 0, timer: null, connected: false };
+  const state = { socket: null, symbols: [], quotes: new Map(), nodes: new Map(), filter: "all", search: "", retry: 0, timer: null, connected: false, subscriptions: new Map(), pendingSubs: new Map(), nextReq: 2000 };
   const $ = id => document.getElementById(id);
   const categoryOf = s => {
     const m = String(s.market || s.market_display_name || "").toLowerCase();
@@ -112,11 +112,7 @@
     render();
     if (!state.symbols.length) {setStatus("NO SYMBOLS · "+(Array.isArray(raw)?raw.length:0)+" RETURNED",false);console.warn("Deriv active_symbols returned no usable symbols",raw);return}
     setStatus("LIVE · "+state.symbols.length+" MARKETS",true);
-    // Send one validated tick subscription per symbol to isolate unsupported symbols.
-    state.symbols.forEach((s, index) => {
-      try { state.socket.send(JSON.stringify({ ticks: s.symbol, subscribe: 1, req_id: 1000 + index })); }
-      catch (e) { console.error("Deriv tick subscription send failed:", s.symbol, e); setStatus("SUBSCRIPTION SEND FAILED · " + s.symbol, false); }
-    });
+    syncTickSubscriptions();
     const select=$("symbol");
     if(select){
       const current=select.value, frag=document.createDocumentFragment();
@@ -128,14 +124,29 @@
       select.dispatchEvent(new Event("change",{bubbles:true}));
     }
   }
+  function syncTickSubscriptions() {
+    const ws=state.socket;
+    if(!ws || ws.readyState!==WebSocket.OPEN || !state.symbols.length) return;
+    const selected=$("symbol")?.value;
+    const filtered=state.symbols.filter(s=>(state.filter==="all"||categoryOf(s)===state.filter)&&((s.display_name+" "+s.symbol+" "+categoryLabel(categoryOf(s))).toLowerCase().includes(state.search)));
+    const wanted=new Set([selected,...filtered.slice(0,7).map(s=>s.symbol)].filter(Boolean).slice(0,8));
+    for(const [symbol,id] of state.subscriptions) { if(!wanted.has(symbol)) { try{ws.send(JSON.stringify({forget:id,req_id:state.nextReq++}));}catch{} state.subscriptions.delete(symbol); } }
+    for(const [reqId,symbol] of state.pendingSubs) if(!wanted.has(symbol)) state.pendingSubs.delete(reqId);
+    for(const symbol of wanted) { if(state.subscriptions.has(symbol)||[...state.pendingSubs.values()].includes(symbol)) continue; const reqId=state.nextReq++; state.pendingSubs.set(reqId,symbol); try{ws.send(JSON.stringify({ticks:symbol,subscribe:1,req_id:reqId}));}catch(error){state.pendingSubs.delete(reqId);console.warn("Deriv tick subscription failed:",symbol,error);} }
+  }
   function connect() {
     clearTimeout(state.timer);
     setStatus("CONNECTING TO DERIV",false);
     const ws=new WebSocket(ENDPOINT);state.socket=ws;
-    ws.onopen=()=>{state.connected=true;state.retry=0;setStatus("LOADING DERIV SYMBOLS",true);ws.send(JSON.stringify({active_symbols:"brief",req_id:1}));};
+    ws.onopen=()=>{state.connected=true;state.retry=0;state.subscriptions.clear();state.pendingSubs.clear();setStatus("LOADING DERIV SYMBOLS",true);ws.send(JSON.stringify({active_symbols:"brief",req_id:1}));};
     ws.onmessage=event=>{
       let data;try{data=JSON.parse(event.data)}catch{return}
+      if(data.req_id && state.pendingSubs.has(Number(data.req_id))) {
+        const symbol=state.pendingSubs.get(Number(data.req_id));state.pendingSubs.delete(Number(data.req_id));
+        if(data.subscription?.id) state.subscriptions.set(symbol,String(data.subscription.id));
+      }
       if(data.error){
+        if(data.req_id) state.pendingSubs.delete(Number(data.req_id));
         const err=data.error;
         setStatus("DERIV ERROR · "+String(err.code||"API")+" · "+String(err.message||"Unknown Deriv error"),false);
         console.error("Deriv market feed error:", {code:err.code,message:err.message,echo_req:data.echo_req,req_id:data.req_id,raw:data});
@@ -147,7 +158,7 @@
       if(data.msg_type==="tick"&&data.tick)updateQuote(data.tick);
     };
     ws.onerror=()=>setStatus("FEED CONNECTION ERROR",false);
-    ws.onclose=()=>{state.connected=false;setStatus("RECONNECTING",false);state.retry=Math.min(state.retry+1,6);state.timer=setTimeout(connect,Math.min(30000,1000*Math.pow(2,state.retry)));};
+    ws.onclose=()=>{state.connected=false;state.subscriptions.clear();state.pendingSubs.clear();setStatus("RECONNECTING",false);state.retry=Math.min(state.retry+1,6);state.timer=setTimeout(connect,Math.min(30000,1000*Math.pow(2,state.retry)));};
   }
   document.addEventListener("click",e=>{
     const row=e.target.closest(".live-market-row");
@@ -159,8 +170,8 @@
     const tradingTab=document.querySelector('[data-tab="trading"]');
     if(tradingTab)tradingTab.click();
   });
-  $("marketSearch")?.addEventListener("input",e=>{state.search=e.target.value.trim().toLowerCase();render()});
-  $("marketTabs")?.addEventListener("click",e=>{const b=e.target.closest("[data-market-filter]");if(!b)return;state.filter=b.dataset.marketFilter;$("marketTabs").querySelectorAll("button").forEach(x=>x.classList.toggle("selected",x===b));render()});
+  $("marketSearch")?.addEventListener("input",e=>{state.search=e.target.value.trim().toLowerCase();render();syncTickSubscriptions()});
+  $("marketTabs")?.addEventListener("click",e=>{const b=e.target.closest("[data-market-filter]");if(!b)return;state.filter=b.dataset.marketFilter;$("marketTabs").querySelectorAll("button").forEach(x=>x.classList.toggle("selected",x===b));render();syncTickSubscriptions()});
   window.addEventListener("online",()=>{if(!state.connected)connect()});
 
   // Live chart: independent public Deriv feed, never sends trade orders.
@@ -200,7 +211,7 @@
     ws.onerror=()=>chartStatus("CONNECTION ERROR");
     ws.onclose=()=>{if(chartState.ws===ws)chartStatus("DISCONNECTED");};
   }
-  $("symbol")?.addEventListener("change",chartConnect);
+  $("symbol")?.addEventListener("change",()=>{syncTickSubscriptions();chartConnect();});
   document.querySelectorAll("[data-chart-time]").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll("[data-chart-time]").forEach(x=>x.classList.toggle("selected",x===b));chartState.granularity=Number(b.dataset.chartTime);chartConnect();}));
   window.addEventListener("resize",drawChart);
   setTimeout(chartConnect,1200);
