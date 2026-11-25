@@ -17,7 +17,7 @@
 <main class="main-content">
 <section id="home" class="page active-page">
   <div class="welcome-row"><div><span class="eyebrow">YOUR TRADING SPACE</span><h1>Good day 👋</h1><p class="muted">Track the market and manage your Demo trades.</p></div><span class="demo-chip">● DEMO MODE</span></div>
-  <div class="ticker-strip"><span>BTC/USDT <b>—</b></span><span>ETH/USDT <b>—</b></span><span>EUR/USD <b>—</b></span><span>GOLD <b>—</b></span></div>
+  <div id="tickerStrip" class="ticker-strip"><span class="ticker-status">Connecting to Deriv market feed…</span></div>
   <article class="hero-balance">
     <div class="balance-head"><span>DEMO ACCOUNT BALANCE</span><span class="secure-dot"></span></div>
     <strong id="balance">—</strong><div class="balance-foot"><span id="accountType">Not connected</span><span id="modeLabel">Demo mode</span></div>
@@ -30,12 +30,7 @@
     <button class="quick-action" data-jump="trading"><span class="quick-icon amber">⚙</span><b>Bot settings</b><small>Strategy & risk</small></button>
   </div>
   <div class="section-title"><div><span class="eyebrow">MARKET WATCH</span><h2>Popular markets</h2></div><button class="text-link" data-jump="markets">See all →</button></div>
-  <div class="market-card">
-    <div class="market-row"><span class="coin btc">₿</span><div class="market-name"><b>BTC/USDT</b><small>Bitcoin / Tether</small></div><div class="market-price"><b>—</b><small>Waiting for live feed</small></div><span class="change neutral">—</span></div>
-    <div class="market-row"><span class="coin eth">◆</span><div class="market-name"><b>ETH/USDT</b><small>Ethereum / Tether</small></div><div class="market-price"><b>—</b><small>Waiting for live feed</small></div><span class="change neutral">—</span></div>
-    <div class="market-row"><span class="coin gold">Au</span><div class="market-name"><b>XAU/USD</b><small>Gold</small></div><div class="market-price"><b>—</b><small>Waiting for live feed</small></div><span class="change neutral">—</span></div>
-    <div class="market-row"><span class="coin fx">€</span><div class="market-name"><b>EUR/USD</b><small>Euro / US Dollar</small></div><div class="market-price"><b>—</b><small>Waiting for live feed</small></div><span class="change neutral">—</span></div>
-  </div>
+  <div id="homeMarkets" class="market-card"><div class="feed-placeholder">Waiting for Deriv market symbols…</div></div>
   <div class="section-title"><div><span class="eyebrow">PERFORMANCE</span><h2>Session overview</h2></div></div>
   <div class="performance-grid">
     <article class="mini-stat"><small>SESSION P/L</small><b id="sessionPL">0.00</b><span id="tradeCount">0 trades</span></article>
@@ -45,19 +40,11 @@
 </section>
 
 <section id="markets" class="page">
-  <div class="page-heading"><div><span class="eyebrow">EXPLORE</span><h1>Markets</h1></div><span class="market-live">● Market watch</span></div>
+  <div class="page-heading"><div><span class="eyebrow">EXPLORE</span><h1>Markets</h1></div><span id="marketFeedStatus" class="market-live">● CONNECTING</span></div>
   <label class="search-box"><span>⌕</span><input id="marketSearch" type="search" placeholder="Search markets"></label>
-  <div class="market-tabs"><button class="selected">Popular</button><button>Crypto</button><button>Forex</button><button>Indices</button><button>Commodities</button></div>
-  <div class="market-list">
-    <div class="market-list-head"><span>ASSET</span><span>LIVE PRICE</span><span>CHANGE</span></div>
-    <div class="market-row"><span class="coin btc">₿</span><div class="market-name"><b>BTC/USDT</b><small>Bitcoin / Tether</small></div><div class="market-price"><b>—</b><small>Not streamed</small></div><span class="change neutral">—</span></div>
-    <div class="market-row"><span class="coin eth">◆</span><div class="market-name"><b>ETH/USDT</b><small>Ethereum / Tether</small></div><div class="market-price"><b>—</b><small>Not streamed</small></div><span class="change neutral">—</span></div>
-    <div class="market-row"><span class="coin gold">Au</span><div class="market-name"><b>XAU/USD</b><small>Gold</small></div><div class="market-price"><b>—</b><small>Not streamed</small></div><span class="change neutral">—</span></div>
-    <div class="market-row"><span class="coin fx">€</span><div class="market-name"><b>EUR/USD</b><small>Euro / US Dollar</small></div><div class="market-price"><b>—</b><small>Not streamed</small></div><span class="change neutral">—</span></div>
-    <div class="market-row"><span class="coin sol">S</span><div class="market-name"><b>SOL/USDT</b><small>Solana / Tether</small></div><div class="market-price"><b>—</b><small>Not streamed</small></div><span class="change neutral">—</span></div>
-    <div class="market-row"><span class="coin index">V</span><div class="market-name"><b>Volatility 100</b><small>Deriv synthetic index</small></div><div class="market-price"><b>—</b><small>Connect Deriv</small></div><span class="change neutral">—</span></div>
-  </div>
-  <p class="feed-note">Market prices are intentionally left blank until a verified live data feed is connected. BONAGO will not display invented quotes.</p>
+  <div id="marketTabs" class="market-tabs"><button class="selected" data-market-filter="all">All</button><button data-market-filter="forex">Forex</button><button data-market-filter="synthetic">Synthetic</button><button data-market-filter="crypto">Crypto</button><button data-market-filter="commodities">Commodities</button><button data-market-filter="stocks">Stocks</button></div>
+  <div class="market-list"><div class="market-list-head"><span>ASSET</span><span>LIVE PRICE</span><span>SESSION</span></div><div id="marketRows"><div class="feed-placeholder">Loading active Deriv markets…</div></div></div>
+  <p class="feed-note">Prices are streamed directly from Deriv. Session change is calculated from the first quote received during this visit; it is not a 24-hour change.</p>
 </section>
 
 <section id="trading" class="page">
@@ -129,13 +116,12 @@
 <script>
 document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b===btn));document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active-page',p.id===btn.dataset.tab));window.scrollTo({top:0,behavior:'smooth'});}));
 document.querySelectorAll('[data-jump]').forEach(btn=>btn.addEventListener('click',()=>document.querySelector('[data-tab="'+btn.dataset.jump+'"]').click()));
-document.querySelectorAll('.market-row').forEach(row=>{row.dataset.search=row.innerText.toLowerCase()});
-document.getElementById('marketSearch').addEventListener('input',e=>document.querySelectorAll('#markets .market-row').forEach(r=>r.hidden=!r.dataset.search.includes(e.target.value.toLowerCase())));
 const syncAccountUI=()=>{const b=document.getElementById('balance').textContent;document.getElementById('assetsBalance').textContent=b;document.getElementById('assetsAccountType').textContent=document.getElementById('accountType').textContent;document.getElementById('assetsPL').textContent=document.getElementById('sessionPL').textContent;document.getElementById('tradePL').textContent=document.getElementById('sessionPL').textContent;document.getElementById('tradeBotStatus').textContent=document.getElementById('botStatus').textContent;};
 new MutationObserver(syncAccountUI).observe(document.getElementById('balance'),{childList:true,characterData:true,subtree:true});
 new MutationObserver(syncAccountUI).observe(document.getElementById('accountType'),{childList:true,characterData:true,subtree:true});
 new MutationObserver(syncAccountUI).observe(document.getElementById('sessionPL'),{childList:true,characterData:true,subtree:true});
 new MutationObserver(syncAccountUI).observe(document.getElementById('botStatus'),{childList:true,characterData:true,subtree:true});
 </script>
+<script src="marketData.js"></script>
 <script src="app.js"></script>
 </body></html>
