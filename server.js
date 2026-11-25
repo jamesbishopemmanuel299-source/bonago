@@ -16,10 +16,12 @@ const RENDER_TOKEN_SOURCE = DERIV_ACCESS_TOKEN ? "render-live-token" : (DERIV_DE
 
 // Deriv PAT requests require Deriv-App-ID. For this deployment, use the configured
 // client/app identifier without exposing it to the browser.
-function derivHeaders(accessToken = DERIV_ACCESS_TOKEN, extra = {}) {
+function derivHeaders(accessToken, extra = {}) {
+  // Deriv requires Deriv-App-ID for PATs only. OAuth access tokens already
+  // identify the app; never send the OAuth Client ID as a Deriv-App-ID header.
   return {
     Authorization: "Bearer " + accessToken,
-    ...((DERIV_APP_ID || DERIV_CLIENT_ID) ? { "Deriv-App-ID": DERIV_APP_ID || DERIV_CLIENT_ID } : {}),
+    ...(DERIV_APP_ID ? { "Deriv-App-ID": DERIV_APP_ID } : {}),
     ...extra
   };
 }
@@ -60,11 +62,11 @@ app.get("/health", (_req, res) => res.status(200).json({
   ok: true,
   service: "BONAGO",
   derivOAuthConfigured: Boolean(DERIV_CLIENT_ID && SESSION_SECRET),
-  derivSecretConfigured: Boolean((DERIV_APP_ID || DERIV_CLIENT_ID) && (DERIV_ACCESS_TOKEN || DERIV_DEMO_ACCESS_TOKEN)),
+  derivSecretConfigured: Boolean(DERIV_ACCESS_TOKEN || DERIV_DEMO_ACCESS_TOKEN),
   derivLiveTokenConfigured: Boolean(DERIV_ACCESS_TOKEN),
   derivDemoFallbackConfigured: Boolean(DERIV_DEMO_ACCESS_TOKEN),
   tokenSource: RENDER_TOKEN_SOURCE,
-  derivAppIdConfigured: Boolean(DERIV_APP_ID || DERIV_CLIENT_ID),
+  derivAppIdConfigured: Boolean(DERIV_APP_ID),
   mode: "demo-only"
 }));
 
@@ -138,7 +140,7 @@ app.get("/auth/deriv/callback", async (req, res) => {
 
 function getDerivTokenCandidates(req) {
   const candidates = [];
-  if (DERIV_APP_ID || DERIV_CLIENT_ID) {
+  if (DERIV_ACCESS_TOKEN || DERIV_DEMO_ACCESS_TOKEN) {
     if (DERIV_ACCESS_TOKEN) candidates.push({ accessToken: DERIV_ACCESS_TOKEN, tokenSource: "render-live-token", expiresAt: Number.MAX_SAFE_INTEGER });
     if (DERIV_DEMO_ACCESS_TOKEN) candidates.push({ accessToken: DERIV_DEMO_ACCESS_TOKEN, tokenSource: "render-demo-fallback", expiresAt: Number.MAX_SAFE_INTEGER });
   }
@@ -231,7 +233,7 @@ app.post("/api/deriv/otp", express.json(), async (req, res) => {
 });
 
 app.get("/api/deriv/status", (req, res) => {
-  if ((DERIV_APP_ID || DERIV_CLIENT_ID) && (DERIV_ACCESS_TOKEN || DERIV_DEMO_ACCESS_TOKEN)) return res.json({ connected: true, source: DERIV_ACCESS_TOKEN ? "render-live-token" : "render-demo-fallback", mode: "demo-only", liveTokenConfigured: Boolean(DERIV_ACCESS_TOKEN), demoFallbackConfigured: Boolean(DERIV_DEMO_ACCESS_TOKEN) });
+  if (DERIV_ACCESS_TOKEN || DERIV_DEMO_ACCESS_TOKEN) return res.json({ connected: true, source: DERIV_ACCESS_TOKEN ? "render-live-token" : "render-demo-fallback", mode: "demo-only", liveTokenConfigured: Boolean(DERIV_ACCESS_TOKEN), demoFallbackConfigured: Boolean(DERIV_DEMO_ACCESS_TOKEN) });
   const sid = verifyCookie(cookieValue(req, "bonago_sid"));
   const session = sid && sessions.get(sid);
   if (!session || session.expiresAt <= Date.now()) {
