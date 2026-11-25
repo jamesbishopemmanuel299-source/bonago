@@ -1,73 +1,141 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#07110f">
-<title>BONAGO — Deriv Trading Terminal</title>
-<link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="styles.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090b0e">
+<title>BONAGO — Trading</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div class="app-shell">
-<aside class="sidebar">
-  <a class="brand" href="#" aria-label="BONAGO home"><span class="brand-mark">B</span><span>BONAGO<small>TRADING TERMINAL</small></span></a>
-  <div class="side-label">WORKSPACE</div>
-  <a class="nav-item active" href="#overview"><span>◫</span> Overview</a>
-  <a class="nav-item" href="#connection"><span>⌁</span> Deriv account</a>
-  <a class="nav-item" href="#strategy"><span>⌁</span> Strategy & risk</a>
-  <a class="nav-item" href="#execution"><span>▶</span> Execution</a>
-  <a class="nav-item" href="#activity"><span>≡</span> Activity log</a>
-  <div class="sidebar-bottom"><span class="secure-dot"></span><span>Credentials protected<br><small>Loaded from Render secrets</small></span></div>
-</aside>
+<header class="mobile-top">
+  <a class="brand" href="#home"><span class="brand-mark">B</span><span>BONAGO<small>TRADE SMARTER</small></span></a>
+  <div class="top-right"><span id="connectionBadge" class="badge off">DISCONNECTED</span><button class="avatar" aria-label="Account">B</button></div>
+</header>
 <main class="main-content">
-<header class="topbar"><div><div class="eyebrow">DERIV AUTOMATION / WORKSPACE</div><h1>Trading overview</h1><p class="muted">Monitor your account and manage automated execution.</p></div><div class="top-status"><span class="live-indicator"></span><span id="connectionBadge" class="badge off">DISCONNECTED</span></div></header>
-<section id="overview" class="overview">
-  <div class="section-heading"><div><span class="section-kicker">ACCOUNT SNAPSHOT</span><h2>Performance at a glance</h2></div><span class="updated-label">Selected account</span></div>
-  <div class="stats">
-    <article class="stat-card balance-card"><div class="stat-top"><small>ACCOUNT BALANCE</small><span class="stat-icon">₦</span></div><strong id="balance">—</strong><small id="accountType">Not connected</small></article>
-    <article class="stat-card"><div class="stat-top"><small>BOT STATUS</small><span class="stat-icon">◉</span></div><strong id="botStatus">STOPPED</strong><small id="modeLabel">Demo mode</small></article>
-    <article class="stat-card"><div class="stat-top"><small>SESSION PROFIT / LOSS</small><span class="stat-icon">↗</span></div><strong id="sessionPL">0.00</strong><small id="tradeCount">0 trades</small></article>
-    <article class="stat-card"><div class="stat-top"><small>WINNING TRADES</small><span class="stat-icon">✓</span></div><strong id="winCount">0</strong><small>Profitable closed contracts</small></article>
-    <article class="stat-card"><div class="stat-top"><small>LOSING TRADES</small><span class="stat-icon">↘</span></div><strong id="lossCount">0</strong><small>Loss-making closed contracts</small></article>
-    <article class="stat-card"><div class="stat-top"><small>WIN RATE</small><span class="stat-icon">%</span></div><strong id="winRate">0.0%</strong><small>Wins / closed trades</small></article>
+<section id="home" class="page active-page">
+  <div class="welcome-row"><div><span class="eyebrow">YOUR TRADING SPACE</span><h1>Good day 👋</h1><p class="muted">Track the market and manage your Demo trades.</p></div><span class="demo-chip">● DEMO MODE</span></div>
+  <div class="ticker-strip"><span>BTC/USDT <b>—</b></span><span>ETH/USDT <b>—</b></span><span>EUR/USD <b>—</b></span><span>GOLD <b>—</b></span></div>
+  <article class="hero-balance">
+    <div class="balance-head"><span>DEMO ACCOUNT BALANCE</span><span class="secure-dot"></span></div>
+    <strong id="balance">—</strong><div class="balance-foot"><span id="accountType">Not connected</span><span id="modeLabel">Demo mode</span></div>
+    <div class="balance-actions"><button id="homeConnect" class="primary" onclick="document.querySelector('[data-tab=assets]').click()">Connect account <span>→</span></button><button class="ghost" onclick="document.querySelector('[data-tab=trading]').click()">Open trading</button></div>
+  </article>
+  <div class="quick-grid">
+    <button class="quick-action" data-jump="markets"><span class="quick-icon blue">⌕</span><b>Markets</b><small>Explore assets</small></button>
+    <button class="quick-action" data-jump="trading"><span class="quick-icon green">↗</span><b>Trade</b><small>Open terminal</small></button>
+    <button class="quick-action" data-jump="assets"><span class="quick-icon violet">▣</span><b>Accounts</b><small>Demo connection</small></button>
+    <button class="quick-action" data-jump="trading"><span class="quick-icon amber">⚙</span><b>Bot settings</b><small>Strategy & risk</small></button>
+  </div>
+  <div class="section-title"><div><span class="eyebrow">MARKET WATCH</span><h2>Popular markets</h2></div><button class="text-link" data-jump="markets">See all →</button></div>
+  <div class="market-card">
+    <div class="market-row"><span class="coin btc">₿</span><div class="market-name"><b>BTC/USDT</b><small>Bitcoin / Tether</small></div><div class="market-price"><b>—</b><small>Waiting for live feed</small></div><span class="change neutral">—</span></div>
+    <div class="market-row"><span class="coin eth">◆</span><div class="market-name"><b>ETH/USDT</b><small>Ethereum / Tether</small></div><div class="market-price"><b>—</b><small>Waiting for live feed</small></div><span class="change neutral">—</span></div>
+    <div class="market-row"><span class="coin gold">Au</span><div class="market-name"><b>XAU/USD</b><small>Gold</small></div><div class="market-price"><b>—</b><small>Waiting for live feed</small></div><span class="change neutral">—</span></div>
+    <div class="market-row"><span class="coin fx">€</span><div class="market-name"><b>EUR/USD</b><small>Euro / US Dollar</small></div><div class="market-price"><b>—</b><small>Waiting for live feed</small></div><span class="change neutral">—</span></div>
+  </div>
+  <div class="section-title"><div><span class="eyebrow">PERFORMANCE</span><h2>Session overview</h2></div></div>
+  <div class="performance-grid">
+    <article class="mini-stat"><small>SESSION P/L</small><b id="sessionPL">0.00</b><span id="tradeCount">0 trades</span></article>
+    <article class="mini-stat"><small>WIN RATE</small><b id="winRate">0.0%</b><span><i id="winCount">0</i> wins · <i id="lossCount">0</i> losses</span></article>
+    <article class="mini-stat"><small>BOT STATUS</small><b id="botStatus">STOPPED</b><span>Demo automation</span></article>
   </div>
 </section>
-<section id="connection" class="panel">
-  <div class="panelHead"><div><span class="section-kicker">01 / ACCOUNT</span><h2>Connect Deriv</h2></div><span class="secure-tag"><span class="secure-dot"></span> SERVER-SECURED</span></div>
-  <p class="panel-description">Choose your Deriv Demo account. Real accounts are not available in this build.</p>
-  <div class="grid two"><label>Deriv account<select id="derivAccount"><option value="">Loading accounts from Render secrets…</option></select></label><div class="message">BONAGO reads <b>DERIV_CLIENT_ID</b> and <b>DERIV_ACCESS_TOKEN</b> from your private Render environment. No token entry or OAuth sign-in is needed here.</div></div>
-  <div class="actions"><button id="connectBtn" disabled>Connect selected account <span>→</span></button><button id="disconnectBtn" class="secondary" disabled>Disconnect</button></div>
-  <p class="hint">Your access token stays on the server. BONAGO uses it to load Demo and Real accounts and request a short-lived WebSocket OTP. Never paste your token into this page.</p>
-  <div id="connectMessage" class="message status-message">Not connected.</div>
-</section>
-<section id="strategy" class="panel">
-  <div class="panelHead"><div><span class="section-kicker">02 / CONFIGURATION</span><h2>Strategy & risk</h2></div><span class="subtle-pill">EMA CROSSOVER · 1-MIN CANDLES</span></div>
-  <p class="panel-description">Configure the market, entry size and session protection limits.</p>
-  <div class="grid three">
-    <label>Market<select id="symbol"><option value="R_100">Volatility 100 Index</option><option value="R_75">Volatility 75 Index</option><option value="R_50">Volatility 50 Index</option><option value="R_25">Volatility 25 Index</option><option value="1HZ100V">Volatility 100 (1s)</option></select></label>
-    <label>Stake per trade<input id="stake" type="number" min="0.35" step="0.01" value="1"></label>
-    <label>Contract duration<select id="duration"><option value="5">5 minutes</option><option value="3">3 minutes</option><option value="1">1 minute</option></select></label>
-    <label>Fast EMA<input id="fastEma" type="number" min="2" max="30" value="9"></label>
-    <label>Slow EMA<input id="slowEma" type="number" min="3" max="100" value="21"></label>
-    <label>Max trades per session<input id="maxTrades" type="number" min="1" max="100" value="5"></label>
-    <label>Session loss limit<input id="lossLimit" type="number" min="0.01" step="0.01" value="5"></label>
-    <label>Take-profit target<input id="profitTarget" type="number" min="0.01" step="0.01" value="3"></label>
-    <label>Cooldown (minutes)<input id="cooldown" type="number" min="0" max="120" value="5"></label>
+
+<section id="markets" class="page">
+  <div class="page-heading"><div><span class="eyebrow">EXPLORE</span><h1>Markets</h1></div><span class="market-live">● Market watch</span></div>
+  <label class="search-box"><span>⌕</span><input id="marketSearch" type="search" placeholder="Search markets"></label>
+  <div class="market-tabs"><button class="selected">Popular</button><button>Crypto</button><button>Forex</button><button>Indices</button><button>Commodities</button></div>
+  <div class="market-list">
+    <div class="market-list-head"><span>ASSET</span><span>LIVE PRICE</span><span>CHANGE</span></div>
+    <div class="market-row"><span class="coin btc">₿</span><div class="market-name"><b>BTC/USDT</b><small>Bitcoin / Tether</small></div><div class="market-price"><b>—</b><small>Not streamed</small></div><span class="change neutral">—</span></div>
+    <div class="market-row"><span class="coin eth">◆</span><div class="market-name"><b>ETH/USDT</b><small>Ethereum / Tether</small></div><div class="market-price"><b>—</b><small>Not streamed</small></div><span class="change neutral">—</span></div>
+    <div class="market-row"><span class="coin gold">Au</span><div class="market-name"><b>XAU/USD</b><small>Gold</small></div><div class="market-price"><b>—</b><small>Not streamed</small></div><span class="change neutral">—</span></div>
+    <div class="market-row"><span class="coin fx">€</span><div class="market-name"><b>EUR/USD</b><small>Euro / US Dollar</small></div><div class="market-price"><b>—</b><small>Not streamed</small></div><span class="change neutral">—</span></div>
+    <div class="market-row"><span class="coin sol">S</span><div class="market-name"><b>SOL/USDT</b><small>Solana / Tether</small></div><div class="market-price"><b>—</b><small>Not streamed</small></div><span class="change neutral">—</span></div>
+    <div class="market-row"><span class="coin index">V</span><div class="market-name"><b>Volatility 100</b><small>Deriv synthetic index</small></div><div class="market-price"><b>—</b><small>Connect Deriv</small></div><span class="change neutral">—</span></div>
   </div>
-  <div class="strategy-note"><strong>Strategy logic</strong><span>CALL when fast EMA crosses above slow EMA; PUT on the reverse crossover. One open contract at a time. Settings do not guarantee profit.</span></div>
+  <p class="feed-note">Market prices are intentionally left blank until a verified live data feed is connected. BONAGO will not display invented quotes.</p>
 </section>
-<section id="execution" class="panel execution-panel">
-  <div class="panelHead"><div><span class="section-kicker">03 / CONTROL CENTER</span><h2>Execution controls</h2></div><span id="modePill" class="pill">DEMO ONLY · LOCKED</span></div>
-  <div class="mode-warning"><strong>Demo-only safety lock</strong><span>This BONAGO deployment accepts Demo accounts only. Real accounts are filtered out and rejected by the server.</span></div>
-  <label class="toggle"><input id="liveMode" type="checkbox" disabled><span>LIVE account mode — disabled</span></label>
-  <label class="toggle"><input id="liveConfirm" type="checkbox" disabled><span>Live trading authorization — unavailable in this build.</span></label>
-  <div class="actions"><button id="startBtn" disabled>▶ Start automatic trading</button><button id="stopBtn" class="danger" disabled>■ Stop bot</button><button id="panicBtn" class="secondary">Emergency disconnect</button></div>
-  <div id="botMessage" class="message status-message">Connect a demo account to begin.</div>
+
+<section id="trading" class="page">
+  <div class="page-heading"><div><span class="eyebrow">TRADE MANAGEMENT</span><h1>Trading</h1></div><span class="demo-chip">DEMO ONLY</span></div>
+  <div class="trade-summary">
+    <div><small>OPEN POSITIONS</small><b id="openPositions">0</b></div>
+    <div><small>SESSION P/L</small><b id="tradePL">0.00</b></div>
+    <div><small>BOT STATUS</small><b id="tradeBotStatus">STOPPED</b></div>
+  </div>
+  <div class="trade-tabs"><button class="selected">Positions</button><button>Pending orders</button><button>Weekly orders</button></div>
+  <div class="empty-state"><span class="empty-icon">⌁</span><b>No open positions</b><small>Connect your Deriv Demo account to monitor positions here.</small><button class="outline-btn" data-jump="assets">Connect Demo account</button></div>
+  <section id="execution" class="panel">
+    <div class="panelHead"><div><span class="eyebrow">BOT CONTROL</span><h2>Automatic trading</h2></div><span id="modePill" class="pill">DEMO ONLY · LOCKED</span></div>
+    <div class="mode-warning"><strong>Demo-only safety lock</strong><span>This deployment accepts Demo accounts only. Real accounts are rejected by the server.</span></div>
+    <label class="toggle"><input id="liveMode" type="checkbox" disabled><span>Live account mode — disabled</span></label>
+    <label class="toggle"><input id="liveConfirm" type="checkbox" disabled><span>Live trading authorization — unavailable.</span></label>
+    <div class="actions"><button id="startBtn" disabled>▶ Start automatic trading</button><button id="stopBtn" class="danger" disabled>■ Stop bot</button><button id="panicBtn" class="secondary">Emergency disconnect</button></div>
+    <div id="botMessage" class="message status-message">Connect a Demo account to begin.</div>
+  </section>
+  <section id="strategy" class="panel">
+    <div class="panelHead"><div><span class="eyebrow">STRATEGY CONFIGURATION</span><h2>Strategy & risk</h2></div><span class="subtle-pill">EMA CROSSOVER · 1M</span></div>
+    <div class="grid three">
+      <label>Market<select id="symbol"><option value="R_100">Volatility 100 Index</option><option value="R_75">Volatility 75 Index</option><option value="R_50">Volatility 50 Index</option><option value="R_25">Volatility 25 Index</option><option value="1HZ100V">Volatility 100 (1s)</option></select></label>
+      <label>Stake per trade<input id="stake" type="number" min="0.35" step="0.01" value="1"></label>
+      <label>Contract duration<select id="duration"><option value="5">5 minutes</option><option value="3">3 minutes</option><option value="1">1 minute</option></select></label>
+      <label>Fast EMA<input id="fastEma" type="number" min="2" max="30" value="9"></label>
+      <label>Slow EMA<input id="slowEma" type="number" min="3" max="100" value="21"></label>
+      <label>Max trades per session<input id="maxTrades" type="number" min="1" max="100" value="5"></label>
+      <label>Session loss limit<input id="lossLimit" type="number" min="0.01" step="0.01" value="5"></label>
+      <label>Take-profit target<input id="profitTarget" type="number" min="0.01" step="0.01" value="3"></label>
+      <label>Cooldown (minutes)<input id="cooldown" type="number" min="0" max="120" value="5"></label>
+    </div>
+    <div class="strategy-note"><b>Strategy logic</b><span>CALL when fast EMA crosses above slow EMA; PUT on the reverse crossover. One open contract at a time. Settings do not guarantee profit.</span></div>
+  </section>
+  <section id="activity" class="panel">
+    <div class="panelHead"><div><span class="eyebrow">MONITORING</span><h2>Activity log</h2></div><button id="clearLog" class="textButton">Clear log</button></div>
+    <div id="log" class="log" aria-live="polite"><div class="logrow">BONAGO ready. No trades have been placed.</div></div>
+  </section>
 </section>
-<section id="activity" class="panel">
-  <div class="panelHead"><div><span class="section-kicker">04 / MONITORING</span><h2>Activity log</h2></div><button id="clearLog" class="textButton">Clear log</button></div>
-  <div id="log" class="log" aria-live="polite"><div class="logrow">BONAGO ready. No trades have been placed.</div></div>
+
+<section id="assets" class="page">
+  <div class="page-heading"><div><span class="eyebrow">ACCOUNT CENTER</span><h1>Assets</h1></div><span class="demo-chip">DEMO</span></div>
+  <article class="assets-overview">
+    <small>MY ASSETS</small><strong id="assetsBalance">—</strong><span id="assetsAccountType">Connect your Deriv Demo account</span>
+    <div class="asset-actions"><button class="primary" id="assetsConnect" onclick="document.getElementById('connectBtn').click()">Connect</button><button class="ghost" id="disconnectBtn" disabled>Disconnect</button></div>
+    <div class="assets-pnl"><span>Today's P/L</span><b id="assetsPL">0.00</b></div>
+  </article>
+  <section class="panel" id="connection">
+    <div class="panelHead"><div><span class="eyebrow">SECURE CONNECTION</span><h2>Deriv Demo account</h2></div><span class="secure-tag"><span class="secure-dot"></span> SERVER SECURED</span></div>
+    <p class="panel-description">Choose a Demo account available to your configured Deriv login.</p>
+    <label>Available Demo account<select id="derivAccount"><option value="">Loading accounts from Render secrets…</option></select></label>
+    <div class="message">BONAGO reads <b>DERIV_CLIENT_ID</b>, <b>DERIV_APP_ID</b> and <b>DERIV_ACCESS_TOKEN</b> from your private Render environment. Secrets are never shown in this page.</div>
+    <div class="actions"><button id="connectBtn" disabled>Connect selected Demo account →</button></div>
+    <p class="hint">The server verifies the account is virtual before issuing a short-lived authenticated WebSocket URL. Live accounts remain blocked.</p>
+    <div id="connectMessage" class="message status-message">Checking Deriv configuration…</div>
+  </section>
+  <div class="assets-info"><span>▣</span><div><b>Trading account</b><small>Demo balance and activity are loaded from Deriv after a successful connection.</small></div></div>
+  <div class="assets-info"><span>◈</span><div><b>Security</b><small>Your access token stays on the server. Never share it in chat or enter it into the browser.</small></div></div>
+  <footer><b>Risk notice</b> Automated trading is high risk. BONAGO is an experimental tool, not financial advice. Demo-test thoroughly; no strategy guarantees profit.</footer>
 </section>
-<footer><strong>Risk notice</strong> Automated trading is high risk. BONAGO is an experimental tool, not financial advice. Monitor your account. You remain responsible for every trade.</footer>
 </main>
+<nav class="bottom-nav" aria-label="Main navigation">
+  <button class="active" data-tab="home"><span>⌂</span><b>Home</b></button>
+  <button data-tab="markets"><span>▥</span><b>Markets</b></button>
+  <button data-tab="trading"><span>⇄</span><b>Trading</b></button>
+  <button data-tab="assets"><span>▣</span><b>Assets</b></button>
+</nav>
 </div>
+<script>
+document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b===btn));document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active-page',p.id===btn.dataset.tab));window.scrollTo({top:0,behavior:'smooth'});}));
+document.querySelectorAll('[data-jump]').forEach(btn=>btn.addEventListener('click',()=>document.querySelector('[data-tab="'+btn.dataset.jump+'"]').click()));
+document.querySelectorAll('.market-row').forEach(row=>{row.dataset.search=row.innerText.toLowerCase()});
+document.getElementById('marketSearch').addEventListener('input',e=>document.querySelectorAll('#markets .market-row').forEach(r=>r.hidden=!r.dataset.search.includes(e.target.value.toLowerCase())));
+const syncAccountUI=()=>{const b=document.getElementById('balance').textContent;document.getElementById('assetsBalance').textContent=b;document.getElementById('assetsAccountType').textContent=document.getElementById('accountType').textContent;document.getElementById('assetsPL').textContent=document.getElementById('sessionPL').textContent;document.getElementById('tradePL').textContent=document.getElementById('sessionPL').textContent;document.getElementById('tradeBotStatus').textContent=document.getElementById('botStatus').textContent;};
+new MutationObserver(syncAccountUI).observe(document.getElementById('balance'),{childList:true,characterData:true,subtree:true});
+new MutationObserver(syncAccountUI).observe(document.getElementById('accountType'),{childList:true,characterData:true,subtree:true});
+new MutationObserver(syncAccountUI).observe(document.getElementById('sessionPL'),{childList:true,characterData:true,subtree:true});
+new MutationObserver(syncAccountUI).observe(document.getElementById('botStatus'),{childList:true,characterData:true,subtree:true});
+</script>
 <script src="app.js"></script>
 </body></html>
