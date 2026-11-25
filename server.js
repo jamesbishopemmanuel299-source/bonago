@@ -220,6 +220,24 @@ app.post("/auth/deriv/logout", (req, res) => {
   res.json({ ok: true });
 });
 
+const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
+const GROQ_MODEL = "openai/gpt-oss-120b";
+app.get("/api/ai/status", (_req,res) => res.json({configured:Boolean(GROQ_API_KEY),model:GROQ_MODEL,provider:"Groq"}));
+app.post("/api/ai/analyze", express.json({limit:"32kb"}), async (req,res) => {
+ if (!getDerivSession(req)) return res.status(401).json({error:"Connect Deriv Demo first."});
+ if (!GROQ_API_KEY) return res.status(503).json({error:"Add GROQ_API_KEY to Render."});
+ const symbol=String(req.body?.symbol||""); const candles=req.body?.candles;
+ if (!/^[A-Za-z0-9_]{2,24}$/.test(symbol) || !Array.isArray(candles) || candles.length<20 || candles.length>60) return res.status(400).json({error:"Need 20–60 recent candles."});
+ const data=candles.map(c=>({open:Number(c.open),high:Number(c.high),low:Number(c.low),close:Number(c.close)}));
+ if(data.some(c=>!Object.values(c).every(Number.isFinite)||c.high<c.low||c.high<Math.max(c.open,c.close)||c.low>Math.min(c.open,c.close))) return res.status(400).json({error:"Invalid candles."});
+ try {
+  const r=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:"Bearer "+GROQ_API_KEY,"Content-Type":"application/json"},signal:AbortSignal.timeout(20000),body:JSON.stringify({model:GROQ_MODEL,reasoning_effort:"medium",temperature:0.1,max_completion_tokens:500,messages:[{role:"system",content:"Cautious technical analyst. Use only supplied OHLC candles. Never promise profit. Prefer HOLD if evidence is mixed or weak. CALL means up, PUT means down. Confidence 0-100 is only an estimate. Flag high volatility, conflicting momentum or insufficient evidence. Never advise bypassing risk controls."},{role:"user",content:"Analyse one-minute candles for "+symbol+", oldest to newest: "+JSON.stringify(data)}],response_format:{type:"json_schema",json_schema:{name:"bonago_decision",strict:true,schema:{type:"object",properties:{action:{type:"string",enum:["CALL","PUT","HOLD"]},confidence:{type:"integer"},rationale:{type:"string"},risk_flags:{type:"array",items:{type:"string"}}},required:["action","confidence","rationale","risk_flags"],additionalProperties:false}}}})});
+  const b=await r.json(); if(!r.ok) return res.status(502).json({error:"Groq request failed. Check key and account limits."});
+  const d=JSON.parse(b.choices?.[0]?.message?.content||"{}");
+  if(!["CALL","PUT","HOLD"].includes(d.action)||!Number.isInteger(d.confidence)||d.confidence<0||d.confidence>100||typeof d.rationale!=="string"||!Array.isArray(d.risk_flags)) return res.status(502).json({error:"Invalid AI decision."});
+  return res.json({...d,model:GROQ_MODEL,provider:"Groq"});
+ } catch(e) { console.error("Groq analysis failed:",e.message); return res.status(502).json({error:"Groq unavailable; no trade placed."}); }
+});
 app.use(express.static(ROOT, {
   index: "index.html",
   extensions: ["html"],
