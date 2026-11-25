@@ -1,20 +1,73 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#08111f"><title>BONAGO — Deriv Auto Trader</title><link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="styles.css"></head>
-<body><main class="shell">
-<header><div><div class="eyebrow">BONAGO / DERIV AUTOMATION</div><h1>Trading terminal</h1><p class="muted">Connect your Deriv account, test the strategy, and control execution.</p></div><span id="connectionBadge" class="badge off">DISCONNECTED</span></header>
-<section class="stats"><article><small>LIVE ACCOUNT BALANCE</small><strong id="balance">—</strong><small id="accountType">Not connected</small></article><article><small>BOT STATUS</small><strong id="botStatus">STOPPED</strong><small id="modeLabel">Demo mode</small></article><article><small>SESSION PROFIT / LOSS</small><strong id="sessionPL">0.00</strong><small id="tradeCount">0 trades</small></article><article><small>WINNING TRADES</small><strong id="winCount">0</strong><small>Closed profitable contracts</small></article><article><small>LOSING TRADES</small><strong id="lossCount">0</strong><small>Closed loss-making contracts</small></article><article><small>WIN RATE</small><strong id="winRate">0.0%</strong><small>Wins divided by closed trades</small></article></section>
-<section class="panel"><div class="panelHead"><h2>1. Connect Deriv</h2><span class="muted">Credentials loaded securely from Render</span></div>
-<div class="grid two"><label>Deriv account<select id="derivAccount"><option value="">Loading accounts from Render secrets…</option></select></label><div class="message">BONAGO reads DERIV_CLIENT_ID and DERIV_ACCESS_TOKEN from the private Render environment. No token entry or OAuth sign-in is needed on this page.</div></div>
-<div class="actions"><button id="connectBtn" disabled>Connect selected account</button><button id="disconnectBtn" class="secondary" disabled>Disconnect</button></div><p class="hint">Your access token stays on the server. BONAGO uses it to load your Demo and Real accounts and request a short-lived WebSocket OTP. Never paste your token into the website.</p><div id="connectMessage" class="message">Not connected.</div></section>
-<section class="panel"><div class="panelHead"><h2>2. Strategy & risk</h2><span class="muted">EMA crossover · 1-minute candles</span></div>
-<div class="grid three"><label>Market<select id="symbol"><option value="R_100">Volatility 100 Index</option><option value="R_75">Volatility 75 Index</option><option value="R_50">Volatility 50 Index</option><option value="R_25">Volatility 25 Index</option><option value="1HZ100V">Volatility 100 (1s)</option></select></label><label>Stake per trade<input id="stake" type="number" min="0.35" step="0.01" value="1"></label><label>Contract duration<select id="duration"><option value="5">5 minutes</option><option value="3">3 minutes</option><option value="1">1 minute</option></select></label>
-<label>Fast EMA<input id="fastEma" type="number" min="2" max="30" value="9"></label><label>Slow EMA<input id="slowEma" type="number" min="3" max="100" value="21"></label><label>Max trades per session<input id="maxTrades" type="number" min="1" max="100" value="5"></label>
-<label>Daily/session loss limit<input id="lossLimit" type="number" min="0.01" step="0.01" value="5"></label><label>Take-profit target<input id="profitTarget" type="number" min="0.01" step="0.01" value="3"></label><label>Cooldown (minutes)<input id="cooldown" type="number" min="0" max="120" value="5"></label></div>
-<p class="hint">Strategy: buy CALL when the fast EMA crosses above the slow EMA; buy PUT on the reverse crossover. One open contract at a time. These settings are not a profit guarantee.</p></section>
-<section class="panel"><div class="panelHead"><h2>3. Execution</h2><span id="modePill" class="pill">DEMO ONLY</span></div>
-<label class="toggle"><input id="liveMode" type="checkbox"><span>Enable LIVE account mode</span></label>
-<label class="toggle"><input id="liveConfirm" type="checkbox"><span>I understand live trades can lose money and authorize this bot to place real-money trades when I start it.</span></label>
-<div class="actions"><button id="startBtn" disabled>Start automatic trading</button><button id="stopBtn" class="danger" disabled>Stop bot</button><button id="panicBtn" class="secondary">Emergency disconnect</button></div><div id="botMessage" class="message">Connect a demo account to begin.</div></section>
-<section class="panel"><div class="panelHead"><h2>Activity log</h2><button id="clearLog" class="textButton">Clear</button></div><div id="log" class="log" aria-live="polite"><div class="logrow">BONAGO ready. No trades have been placed.</div></div></section>
-<footer>Risk warning: automated trading is high risk. BONAGO is an experimental tool, not financial advice. Monitor your account. You remain responsible for every trade.</footer>
-</main><script src="app.js"></script></body></html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#07110f">
+<title>BONAGO — Deriv Trading Terminal</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-shell">
+<aside class="sidebar">
+  <a class="brand" href="#" aria-label="BONAGO home"><span class="brand-mark">B</span><span>BONAGO<small>TRADING TERMINAL</small></span></a>
+  <div class="side-label">WORKSPACE</div>
+  <a class="nav-item active" href="#overview"><span>◫</span> Overview</a>
+  <a class="nav-item" href="#connection"><span>⌁</span> Deriv account</a>
+  <a class="nav-item" href="#strategy"><span>⌁</span> Strategy & risk</a>
+  <a class="nav-item" href="#execution"><span>▶</span> Execution</a>
+  <a class="nav-item" href="#activity"><span>≡</span> Activity log</a>
+  <div class="sidebar-bottom"><span class="secure-dot"></span><span>Credentials protected<br><small>Loaded from Render secrets</small></span></div>
+</aside>
+<main class="main-content">
+<header class="topbar"><div><div class="eyebrow">DERIV AUTOMATION / WORKSPACE</div><h1>Trading overview</h1><p class="muted">Monitor your account and manage automated execution.</p></div><div class="top-status"><span class="live-indicator"></span><span id="connectionBadge" class="badge off">DISCONNECTED</span></div></header>
+<section id="overview" class="overview">
+  <div class="section-heading"><div><span class="section-kicker">ACCOUNT SNAPSHOT</span><h2>Performance at a glance</h2></div><span class="updated-label">Selected account</span></div>
+  <div class="stats">
+    <article class="stat-card balance-card"><div class="stat-top"><small>ACCOUNT BALANCE</small><span class="stat-icon">₦</span></div><strong id="balance">—</strong><small id="accountType">Not connected</small></article>
+    <article class="stat-card"><div class="stat-top"><small>BOT STATUS</small><span class="stat-icon">◉</span></div><strong id="botStatus">STOPPED</strong><small id="modeLabel">Demo mode</small></article>
+    <article class="stat-card"><div class="stat-top"><small>SESSION PROFIT / LOSS</small><span class="stat-icon">↗</span></div><strong id="sessionPL">0.00</strong><small id="tradeCount">0 trades</small></article>
+    <article class="stat-card"><div class="stat-top"><small>WINNING TRADES</small><span class="stat-icon">✓</span></div><strong id="winCount">0</strong><small>Profitable closed contracts</small></article>
+    <article class="stat-card"><div class="stat-top"><small>LOSING TRADES</small><span class="stat-icon">↘</span></div><strong id="lossCount">0</strong><small>Loss-making closed contracts</small></article>
+    <article class="stat-card"><div class="stat-top"><small>WIN RATE</small><span class="stat-icon">%</span></div><strong id="winRate">0.0%</strong><small>Wins / closed trades</small></article>
+  </div>
+</section>
+<section id="connection" class="panel">
+  <div class="panelHead"><div><span class="section-kicker">01 / ACCOUNT</span><h2>Connect Deriv</h2></div><span class="secure-tag"><span class="secure-dot"></span> SERVER-SECURED</span></div>
+  <p class="panel-description">Choose the Deriv account you want BONAGO to monitor and connect.</p>
+  <div class="grid two"><label>Deriv account<select id="derivAccount"><option value="">Loading accounts from Render secrets…</option></select></label><div class="message">BONAGO reads <b>DERIV_CLIENT_ID</b> and <b>DERIV_ACCESS_TOKEN</b> from your private Render environment. No token entry or OAuth sign-in is needed here.</div></div>
+  <div class="actions"><button id="connectBtn" disabled>Connect selected account <span>→</span></button><button id="disconnectBtn" class="secondary" disabled>Disconnect</button></div>
+  <p class="hint">Your access token stays on the server. BONAGO uses it to load Demo and Real accounts and request a short-lived WebSocket OTP. Never paste your token into this page.</p>
+  <div id="connectMessage" class="message status-message">Not connected.</div>
+</section>
+<section id="strategy" class="panel">
+  <div class="panelHead"><div><span class="section-kicker">02 / CONFIGURATION</span><h2>Strategy & risk</h2></div><span class="subtle-pill">EMA CROSSOVER · 1-MIN CANDLES</span></div>
+  <p class="panel-description">Configure the market, entry size and session protection limits.</p>
+  <div class="grid three">
+    <label>Market<select id="symbol"><option value="R_100">Volatility 100 Index</option><option value="R_75">Volatility 75 Index</option><option value="R_50">Volatility 50 Index</option><option value="R_25">Volatility 25 Index</option><option value="1HZ100V">Volatility 100 (1s)</option></select></label>
+    <label>Stake per trade<input id="stake" type="number" min="0.35" step="0.01" value="1"></label>
+    <label>Contract duration<select id="duration"><option value="5">5 minutes</option><option value="3">3 minutes</option><option value="1">1 minute</option></select></label>
+    <label>Fast EMA<input id="fastEma" type="number" min="2" max="30" value="9"></label>
+    <label>Slow EMA<input id="slowEma" type="number" min="3" max="100" value="21"></label>
+    <label>Max trades per session<input id="maxTrades" type="number" min="1" max="100" value="5"></label>
+    <label>Session loss limit<input id="lossLimit" type="number" min="0.01" step="0.01" value="5"></label>
+    <label>Take-profit target<input id="profitTarget" type="number" min="0.01" step="0.01" value="3"></label>
+    <label>Cooldown (minutes)<input id="cooldown" type="number" min="0" max="120" value="5"></label>
+  </div>
+  <div class="strategy-note"><strong>Strategy logic</strong><span>CALL when fast EMA crosses above slow EMA; PUT on the reverse crossover. One open contract at a time. Settings do not guarantee profit.</span></div>
+</section>
+<section id="execution" class="panel execution-panel">
+  <div class="panelHead"><div><span class="section-kicker">03 / CONTROL CENTER</span><h2>Execution controls</h2></div><span id="modePill" class="pill">DEMO ONLY</span></div>
+  <div class="mode-warning"><strong>Live trading protection</strong><span>Real-money execution stays locked until you enable Live mode and confirm the risk warning.</span></div>
+  <label class="toggle"><input id="liveMode" type="checkbox"><span>Enable LIVE account mode</span></label>
+  <label class="toggle"><input id="liveConfirm" type="checkbox"><span>I understand live trades can lose money and authorize this bot to place real-money trades when I start it.</span></label>
+  <div class="actions"><button id="startBtn" disabled>▶ Start automatic trading</button><button id="stopBtn" class="danger" disabled>■ Stop bot</button><button id="panicBtn" class="secondary">Emergency disconnect</button></div>
+  <div id="botMessage" class="message status-message">Connect a demo account to begin.</div>
+</section>
+<section id="activity" class="panel">
+  <div class="panelHead"><div><span class="section-kicker">04 / MONITORING</span><h2>Activity log</h2></div><button id="clearLog" class="textButton">Clear log</button></div>
+  <div id="log" class="log" aria-live="polite"><div class="logrow">BONAGO ready. No trades have been placed.</div></div>
+</section>
+<footer><strong>Risk notice</strong> Automated trading is high risk. BONAGO is an experimental tool, not financial advice. Monitor your account. You remain responsible for every trade.</footer>
+</main>
+</div>
+<script src="app.js"></script>
+</body></html>
