@@ -10,7 +10,7 @@
     if (m.includes("synthetic") || m.includes("derived") || sub.includes("synthetic")) return "synthetic";
     if (m.includes("crypto") || sub.includes("cryptocurrency")) return "crypto";
     if (m.includes("commodit") || sub.includes("metal") || sub.includes("energy") || sub.includes("oil")) return "commodities";
-    if (m.includes("stock") || m.includes("index") || sub.includes("stock")) return "stocks";
+    if (m.includes("stock") || m.includes("index") || m.includes("indice") || sub.includes("stock") || sub.includes("indice")) return "stocks";
     return "other";
   };
   const categoryLabel = c => ({forex:"Forex",synthetic:"Synthetic",crypto:"Crypto",commodities:"Commodity",stocks:"Stock / Index",other:"Market"}[c] || "Market");
