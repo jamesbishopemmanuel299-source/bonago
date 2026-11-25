@@ -12,9 +12,9 @@ const SESSION_SECRET = process.env.SESSION_SECRET || "";
 
 // Deriv PAT requests require Deriv-App-ID. For this deployment, use the configured
 // client/app identifier without exposing it to the browser.
-function derivHeaders(extra = {}) {
+function derivHeaders(accessToken = DERIV_ACCESS_TOKEN, extra = {}) {
   return {
-    Authorization: "Bearer " + DERIV_ACCESS_TOKEN,
+    Authorization: "Bearer " + accessToken,
     ...(DERIV_CLIENT_ID ? { "Deriv-App-ID": DERIV_CLIENT_ID } : {}),
     ...extra
   };
@@ -138,7 +138,7 @@ app.get("/api/deriv/accounts", async (req, res) => {
   if (!session) return res.status(401).json({ error: "Connect your Deriv account first." });
   try {
     const response = await fetch("https://api.derivws.com/trading/v1/options/accounts", {
-      headers: derivHeaders()
+      headers: derivHeaders(session.accessToken)
     });
     const body = await response.json();
     if (!response.ok) {
