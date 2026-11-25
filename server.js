@@ -45,7 +45,8 @@ function verifyCookie(value) {
 app.get("/health", (_req, res) => res.status(200).json({
   ok: true,
   service: "BONAGO",
-  derivOAuthConfigured: Boolean(DERIV_CLIENT_ID && SESSION_SECRET),\n  derivSecretConfigured: Boolean(DERIV_CLIENT_ID && DERIV_ACCESS_TOKEN)
+  derivOAuthConfigured: Boolean(DERIV_CLIENT_ID && SESSION_SECRET),
+  derivSecretConfigured: Boolean(DERIV_CLIENT_ID && DERIV_ACCESS_TOKEN)
 }));
 
 // OAuth client configuration stays on the server. The client ID is public OAuth metadata;
