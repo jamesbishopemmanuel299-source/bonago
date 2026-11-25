@@ -143,7 +143,7 @@
     <div class="panelHead"><div><span class="eyebrow">SECURE CONNECTION</span><h2>Deriv Demo account</h2></div><span class="secure-tag"><span class="secure-dot"></span> SERVER SECURED</span></div>
     <p class="panel-description">BONAGO reads your private Render credentials, finds the first available Demo account and connects automatically when the app opens.</p>
     <label id="accountPickerLabel" hidden>Detected Demo account<select id="derivAccount"><option value="">Reading secure Render credentials…</option></select></label>
-    <div class="message">Secure automatic connection uses <b>DERIV_ACCESS_TOKEN</b> and <b>DERIV_CLIENT_ID</b> (or <b>DERIV_APP_ID</b>) stored in Render Environment. No token entry or manual broker sign-in is required. Secrets never reach this page.</div>
+    <div class="message">Secure automatic connection checks <b>DERIV_ACCESS_TOKEN</b> first, then <b>DERIV_DEMO_ACCESS_TOKEN</b>. OAuth uses <b>DERIV_CLIENT_ID</b>; PAT tokens require the numeric <b>DERIV_APP_ID</b>. No token entry is needed on this page. Secrets never reach your browser.</div>
     <div class="actions" hidden><button id="connectBtn" disabled>Auto connect</button></div>
     <p class="hint">The server verifies that the account is virtual before connecting. Real accounts and Live trading remain blocked. Use Disconnect only when you intentionally want to end the session.</p>
     <div id="connectMessage" class="message status-message">Reading Render credentials and connecting to Deriv Demo automatically…</div>
