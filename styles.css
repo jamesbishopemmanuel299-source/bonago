@@ -6,3 +6,17 @@ button,input,select{font:inherit}button{cursor:pointer}.app-shell{max-width:900p
 @media(min-width:760px){.app-shell{max-width:760px;border-left:1px solid #171e27;border-right:1px solid #171e27}.main-content{padding:32px 34px 50px}.mobile-top{padding:0 34px}.bottom-nav{bottom:18px}.hero-balance{padding:25px}.market-row{padding:15px 17px}}
 @media(max-width:520px){.mobile-top{height:60px;padding:0 15px}.main-content{padding:20px 14px 34px}.welcome-row h1,.page-heading h1{font-size:25px}.welcome-row{align-items:flex-start}.demo-chip{font-size:8px}.quick-grid{gap:7px}.quick-action{padding:12px 4px}.quick-action b{font-size:10px}.quick-action small{font-size:8px}.hero-balance{padding:17px}.hero-balance>strong{font-size:31px}.market-row{grid-template-columns:32px minmax(0,1fr) minmax(84px,.8fr) auto;gap:7px;padding:12px 10px}.market-name b,.market-price b{font-size:10px}.market-name small,.market-price small{font-size:8px}.change{font-size:9px;padding:6px}.performance-grid{gap:7px}.mini-stat{padding:11px 9px}.mini-stat b{font-size:15px}.mini-stat small{font-size:8px}.three{grid-template-columns:repeat(2,minmax(0,1fr))}.panel{padding:15px 12px}.panelHead h2{font-size:15px}.trade-summary{gap:6px}.trade-summary>div{padding:11px 8px}.trade-summary b{font-size:15px}.market-list-head{grid-template-columns:1fr 83px 51px;padding:11px 10px}.market-list .market-row{grid-template-columns:29px minmax(0,1fr) 83px 51px;gap:6px}.market-list .coin{width:28px;height:28px}}
 @media(max-width:350px){.quick-grid{grid-template-columns:repeat(2,1fr)}.performance-grid{grid-template-columns:1fr}.three{grid-template-columns:1fr}.badge{font-size:8px;padding:7px}}
+
+/* Live Deriv market feed */
+.feed-placeholder{padding:22px 14px;text-align:center;color:#8c9aab;font-size:10px;line-height:1.6}
+.ticker-strip{min-height:36px;align-items:center}
+.ticker-strip .ticker-status{color:#91a0b2}
+.ticker-strip span{font-variant-numeric:tabular-nums}
+.market-live.feed-ok{color:#67e0b0;background:#12372d}
+.market-live.feed-off{color:#ffb1bb;background:#3a2028}
+.live-coin{font-size:9px;letter-spacing:-.04em;background:#202b3a;color:#a8c7ff}
+.live-market-row .market-price b{font-variant-numeric:tabular-nums}
+.change.positive{background:#103c30;color:#60e4b1}
+.change.negative{background:#45212b;color:#ff8798}
+#marketRows .market-row{cursor:default}
+#marketRows .market-row:hover{background:#171f2a}
