@@ -62,6 +62,18 @@ function ema(vals,period){if(vals.length<period)return null;const k=2/(period+1)
 async function startBot(){if(!authorized){setMsg("botMessage","Connect first.");return}if(!authorized.is_virtual){stopBot("Safety lock: BONAGO can trade Demo accounts only.");return}const fast=Number($("fastEma").value),slow=Number($("slowEma").value),stake=Number($("stake").value),loss=Number($("lossLimit").value),target=Number($("profitTarget").value);if(!(fast>=2&&slow>fast&&stake>0&&loss>0&&target>0)){setMsg("botMessage","Check settings: slow EMA must be greater than fast EMA; stake and limits must be positive.");return}if(!confirm("Start automatic DEMO trading on "+$("symbol").value+"? This uses virtual funds only. The bot can place demo trades until stopped or a risk limit is reached."))return;
 sessionProfit=0;tradeCount=0;winCount=0;lossCount=0;$("sessionPL").textContent="0.00";$("tradeCount").textContent="0 trades";$("winCount").textContent="0";$("lossCount").textContent="0";$("winRate").textContent="0.0%";prices=[];candleData=[];lastFast=null;lastSlow=null;lastCandleEpoch=null;openContract=null;lastTradeAt=0;sessionStart=Date.now();$("sessionPL").textContent="0.00";$("tradeCount").textContent="0 trades";botRunning=true;$("botStatus").textContent="RUNNING";$("startBtn").disabled=true;$("stopBtn").disabled=false;setMsg("botMessage","Loading candle history and waiting for a confirmed EMA crossover…");log("Bot started in DEMO mode.");
 try{const r=await send({ticks_history:$("symbol").value,end:"latest",style:"candles",granularity:60,count:100,subscribe:1});historySub=r.subscription?.id||null;(r.candles||[]).forEach(c=>{const p=Number(c.close);if(Number.isFinite(p)){prices.push(p);candleData.push({open:Number(c.open),high:Number(c.high),low:Number(c.low),close:p})}});prices=prices.slice(-100);candleData=candleData.slice(-60);if(prices.length<Number($("slowEma").value)+2)throw Error("Not enough candle history for selected EMA values.");log("Loaded "+prices.length+" one-minute candles. Strategy is active.");setMsg("botMessage","Running. Waiting for the next EMA crossover. No trade is placed until a signal appears.");}catch(e){stopBot("Could not start strategy: "+e.message)}}
+function renderAiDecision(d,checks){
+ const put=(id,value)=>{const el=$(id);if(el)el.textContent=String(value)};
+ const action=d?.action||"ERROR",confidence=Number.isFinite(Number(d?.confidence))?Number(d.confidence):null;
+ put("aiDecisionAction",action);put("aiDecisionConfidence",confidence===null?"—":confidence+"%");
+ put("aiDecisionReason",d?.rationale||"No explanation was returned by Groq.");
+ put("aiDecisionRisks",Array.isArray(d?.risk_flags)&&d.risk_flags.length?d.risk_flags.join(" · "):"No AI risk flags returned.");
+ const list=$("aiTradeChecks");if(list){list.replaceChildren();(checks||[]).forEach(item=>{const li=document.createElement("li");li.textContent=(item.ok?"PASS · ":"BLOCK · ")+item.label;li.style.color=item.ok?"#72ddb3":"#ff9ba8";list.append(li)})}
+ const allowed=!!checks?.length&&checks.every(x=>x.ok);
+ put("aiDecisionEligibility",allowed?"ELIGIBLE":"BLOCKED");
+ put("aiDecisionBadge",allowed?"TRADE GATES PASSED":action==="HOLD"?"AI SAYS HOLD":"TRADE BLOCKED");
+ const badge=$("aiDecisionBadge");if(badge){badge.style.color=allowed?"#72ddb3":"#ff9ba8";badge.style.background=allowed?"#10372e":"#3b2028"}
+}
 async function onCandle(c){
  const epoch=Number(c.epoch),close=Number(c.close); if(!Number.isFinite(close)||epoch===lastCandleEpoch)return; lastCandleEpoch=epoch;
  const candle={open:Number(c.open),high:Number(c.high),low:Number(c.low),close}; if(!Object.values(candle).every(Number.isFinite))return;
@@ -73,12 +85,28 @@ async function onCandle(c){
  try {
   const r=await fetch("/api/ai/analyze",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({symbol:$("symbol").value,candles:candleData.slice(-60)})});
   const d=await r.json(); if(!r.ok)throw Error(d.error||"AI analysis failed");
+  const stake=Number($("stake").value);
+  const checks=[
+   {label:"AI signal is CALL or PUT (not HOLD)",ok:d.action==="CALL"||d.action==="PUT"},
+   {label:"AI confidence is at least 75%",ok:Number(d.confidence)>=75},
+   {label:"Groq returned no risk flags",ok:Array.isArray(d.risk_flags)&&d.risk_flags.length===0},
+   {label:"Bot is still running",ok:botRunning},
+   {label:"Connected account is Deriv Demo",ok:!!authorized&&authorized.is_virtual===true},
+   {label:"No other open contract",ok:!openContract},
+   {label:"Stake is positive and within 5% of current balance",ok:Number.isFinite(stake)&&stake>0&&Math.min(stake,Math.max(0,accountBalance*0.05))>0}
+  ];
+  renderAiDecision(d,checks);
   log("Groq GPT-OSS 120B: "+d.action+" · "+d.confidence+"% · "+d.rationale);
-  if(d.action==="HOLD"||d.confidence<75||d.risk_flags.length){setMsg("botMessage","AI HOLD ("+d.confidence+"%). "+(d.risk_flags.join("; ")||d.rationale));return}
+  if(!checks.every(x=>x.ok)){
+   const blockers=checks.filter(x=>!x.ok).map(x=>x.label).join("; ");
+   setMsg("botMessage",(d.action==="HOLD"?"AI HOLD. ":"Trade blocked. ")+blockers);
+   log("Trade eligibility blocked: "+blockers);
+   return;
+  }
   if(!botRunning||openContract)return;
-  setMsg("botMessage","AI signal "+d.action+" ("+d.confidence+"%). Applying risk controls…");
+  setMsg("botMessage","AI signal "+d.action+" ("+d.confidence+"%). All trade checks passed. Applying final risk controls…");
   placeTrade(d.action).catch(e=>{log("Trade failed: "+e.message);setMsg("botMessage","Trade failed: "+e.message)});
- } catch(e) { log("EMERGENCY STOP — AI unavailable: "+e.message); stopBot("Emergency disconnect: AI unavailable. No trade placed. "+e.message); }
+ } catch(e) { renderAiDecision({action:"ERROR",rationale:e.message,risk_flags:[e.message]},[{label:"Groq analysis completed successfully",ok:false}]);log("EMERGENCY STOP — AI unavailable: "+e.message); stopBot("Emergency disconnect: AI unavailable. No trade placed. "+e.message); }
  finally { aiRequestInFlight=false; }
 }
 async function placeTrade(direction){if(!botRunning||openContract)return;const balance=accountBalance;const requested=Number($("stake").value);const stake=Math.min(requested,Math.max(0, balance*0.05));if(stake<=0)throw Error("Insufficient balance for a safe stake.");if(stake<requested)log("Stake capped to 5% of the displayed account balance: "+stake.toFixed(2));const p=await send({proposal:1,amount:Number(stake.toFixed(2)),basis:"stake",contract_type:direction,currency:authorized.currency,duration:Number($("duration").value),duration_unit:"m",underlying_symbol:$("symbol").value});if(!p.proposal?.id)throw Error("No valid price proposal returned.");const b=await send({buy:p.proposal.id,price:Number(p.proposal.ask_price)});if(!b.buy?.contract_id)throw Error("Deriv did not confirm the purchase.");openContract=b.buy.contract_id;lastTradeAt=Date.now();await refreshPortfolio();log("PURCHASED "+direction+" · contract "+openContract+" · stake "+stake.toFixed(2)+" "+authorized.currency);setMsg("botMessage","Trade placed: "+direction+". Monitoring contract "+openContract+".");await send({proposal_open_contract:1,contract_id:openContract,subscribe:1})}
