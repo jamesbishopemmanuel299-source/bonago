@@ -19,6 +19,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Check JavaScript syntax
+        run: |
+          node --check server.js
+          node --check app.js
+          node --check marketData.js
+          node --check chat.js
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload site
