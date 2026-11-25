@@ -6,11 +6,12 @@ function send(payload){if(!ws||ws.readyState!==1)throw Error("Deriv connection i
 function disconnect(){botRunning=false;try{if(ws&&ws.readyState===1)ws.close()}catch{}ws=null;authorized=null;historySub=null;tickSub=null;openContract=null;pending.forEach(p=>p.reject(Error("Disconnected")));pending.clear();$("connectionBadge").textContent="DISCONNECTED";$("connectionBadge").className="badge off";$("balance").textContent="—";$("accountType").textContent="Not connected";$("connectBtn").disabled=false;$("disconnectBtn").disabled=true;$("startBtn").disabled=true;$("stopBtn").disabled=true;$("botStatus").textContent="STOPPED";$("modeLabel").textContent="Demo mode";setMsg("connectMessage","Disconnected.");setMsg("botMessage","Bot stopped.");}
 function handleMessage(ev){let d;try{d=JSON.parse(ev.data)}catch{return}if(d.req_id&&pending.has(d.req_id)){const p=pending.get(d.req_id);pending.delete(d.req_id);d.error?p.reject(Error(d.error.message||"Deriv error")):p.resolve(d)}if(d.error){log("API error: "+d.error.message);return}if(d.msg_type==="balance"&&d.balance){accountBalance=Number(d.balance.balance);$("balance").textContent=accountBalance.toFixed(2)+" "+d.balance.currency}if(d.msg_type==="tick"&&botRunning){/* tick stream is a connection heartbeat; candle stream drives signals */}if(d.msg_type==="candles"&&botRunning){const cs=d.candles||[];if(cs.length)onCandle(cs[cs.length-1])}if(d.msg_type==="ohlc"&&botRunning&&d.ohlc){onCandle(d.ohlc)}if(d.msg_type==="proposal_open_contract"&&d.proposal_open_contract){const c=d.proposal_open_contract;if(c.is_sold){const profit=Number(c.profit||0);sessionProfit+=profit;tradeCount++;if(profit>0)winCount++;else if(profit<0)lossCount++;$("sessionPL").textContent=(sessionProfit>0?"+":"")+sessionProfit.toFixed(2)+" "+(authorized?.currency||"");$("tradeCount").textContent=tradeCount+" trades";$("winCount").textContent=String(winCount);$("lossCount").textContent=String(lossCount);$("winRate").textContent=(tradeCount?((winCount/tradeCount)*100).toFixed(1):"0.0")+"%";log("Contract "+c.contract_id+" closed. P/L: "+profit.toFixed(2));openContract=null;if(sessionProfit<=-Number($("lossLimit").value)||sessionProfit>=Number($("profitTarget").value)||tradeCount>=Number($("maxTrades").value)){stopBot("Session limit reached. No further trades.");}}}}
 async function loadDerivAccounts(){
-  const status=await fetch("/api/deriv/status",{credentials:"same-origin"}).then(r=>r.json());
-  if(!status.connected){$("derivAccount").innerHTML='<option value="">Deriv secrets not configured</option>';$("connectBtn").disabled=true;setMsg("connectMessage","Add DERIV_CLIENT_ID and DERIV_ACCESS_TOKEN in Render Environment, then redeploy.");return false}
+  const statusResponse=await fetch("/api/deriv/status",{credentials:"same-origin"});
+  const status=await statusResponse.json();
+  if(!status.connected){$("derivAccount").innerHTML='<option value="">Deriv connection unavailable</option>';$("connectBtn").disabled=true;setMsg("connectMessage",status.error||"Add DERIV_CLIENT_ID and DERIV_ACCESS_TOKEN in Render Environment, then redeploy.");return false}
   const response=await fetch("/api/deriv/accounts",{credentials:"same-origin"});
   const data=await response.json();
-  if(!response.ok)throw Error(data.error||"Could not load Deriv accounts.");
+  if(!response.ok)throw Error("Deriv account request failed (HTTP "+response.status+"): "+(data.error||"Unknown Deriv API error")+(data.code?" ["+data.code+"]":""));
   const select=$("derivAccount");select.replaceChildren();
   data.accounts.forEach(account=>{
     const option=document.createElement("option");
@@ -37,7 +38,7 @@ async function connect(){
   try{
     const otpResponse=await fetch("/api/deriv/otp",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({accountId:option.value})});
     const otpData=await otpResponse.json();
-    if(!otpResponse.ok||!otpData.url)throw Error(otpData.error||"Could not authenticate this Deriv account.");
+    if(!otpResponse.ok||!otpData.url)throw Error("Deriv OTP request failed (HTTP "+otpResponse.status+"): "+(otpData.error||"Could not authenticate this account")+(otpData.code?" ["+otpData.code+"]":""));
     ws=new WebSocket(otpData.url);
     await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error("Connection timed out")),12000);ws.onopen=()=>{clearTimeout(timer);resolve()};ws.onerror=()=>{clearTimeout(timer);reject(Error("Could not open authenticated Deriv WebSocket"))}});
     ws.onmessage=handleMessage;
@@ -64,5 +65,5 @@ function stopBot(reason="Bot stopped by user."){botRunning=false;$("botStatus").
 $("connectBtn").addEventListener("click",connect);$("disconnectBtn").addEventListener("click",()=>{stopBot("Disconnected by user.");disconnect()});$("startBtn").addEventListener("click",startBot);$("stopBtn").addEventListener("click",()=>stopBot());$("panicBtn").addEventListener("click",()=>{stopBot("Emergency stop: bot disconnected. Any already-open contract may continue until expiry.");disconnect()});$("liveMode").addEventListener("change",()=>{$("modePill").textContent=$("liveMode").checked?"LIVE MODE":"DEMO ONLY";$("modePill").style.background=$("liveMode").checked?"#512b35":"#173c33";$("modePill").style.color=$("liveMode").checked?"#ff9ca7":"#7ce0b5";if(authorized){disconnect();setMsg("connectMessage","Mode changed. Reconnect and authorize the matching account.")}});$("clearLog").addEventListener("click",()=>$("log").replaceChildren());window.addEventListener("beforeunload",()=>{if(botRunning)stopBot("Page closing.")});
 (async()=>{
   
-  try{await loadDerivAccounts()}catch(error){setMsg("connectMessage",error.message)}
+  try{await loadDerivAccounts()}catch(error){$("derivAccount").innerHTML='<option value="">Unable to load accounts</option>';$("connectBtn").disabled=true;setMsg("connectMessage",error.message);log("Account loading failed: "+error.message)}
 })();
