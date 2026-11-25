@@ -101,7 +101,8 @@
   <section id="strategy" class="panel">
     <div class="panelHead"><div><span class="eyebrow">STRATEGY CONFIGURATION</span><h2>Strategy & risk</h2></div><span class="subtle-pill">EMA CROSSOVER · 1M</span></div>
     <div class="grid three">
-      <label>Market<select id="symbol"><option value="R_100">Volatility 100 Index</option><option value="R_75">Volatility 75 Index</option><option value="R_50">Volatility 50 Index</option><option value="R_25">Volatility 25 Index</option><option value="1HZ100V">Volatility 100 (1s)</option></select></label>
+      <label>Market<select id="symbol" aria-label="Select Deriv market"><option value="R_100">Volatility 100 Index</option><option value="R_75">Volatility 75 Index</option><option value="R_50">Volatility 50 Index</option><option value="R_25">Volatility 25 Index</option><option value="1HZ100V">Volatility 100 (1s)</option></select></label>
+      <div class="selected-market-card"><small>ACTIVE MARKET</small><b id="selectedMarketName">Loading Deriv instruments…</b><span id="activeMarketLabel">Waiting for live market catalogue</span></div>
       <label>Stake per trade<input id="stake" type="number" min="0.35" step="0.01" value="1"></label>
       <label>Contract duration<select id="duration"><option value="5">5 minutes</option><option value="3">3 minutes</option><option value="1">1 minute</option></select></label>
       <label>Fast EMA<input id="fastEma" type="number" min="2" max="30" value="9"></label>
