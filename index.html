@@ -40,7 +40,7 @@
 </section>
 
 <section id="markets" class="page">
-  <div class="page-heading"><div><span class="eyebrow">EXPLORE</span><h1>Markets</h1></div><span id="marketFeedStatus" class="market-live">● CONNECTING</span></div>
+  <div class="page-heading"><div><span class="eyebrow">EXPLORE</span><h1>Markets</h1></div><span id="marketFeedStatus" class="market-live">● CONNECTING</span><span id="marketAccountBalance" class="account-chip">Balance —</span></div>
   <label class="search-box"><span>⌕</span><input id="marketSearch" type="search" placeholder="Search markets"></label>
   <div id="marketTabs" class="market-tabs"><button class="selected" data-market-filter="all">All</button><button data-market-filter="forex">Forex</button><button data-market-filter="synthetic">Synthetic</button><button data-market-filter="crypto">Crypto</button><button data-market-filter="commodities">Commodities</button><button data-market-filter="stocks">Stocks</button></div>
   <div class="market-list"><div class="market-list-head"><span>ASSET</span><span>LIVE PRICE</span><span>SESSION</span></div><div id="marketRows"><div class="feed-placeholder">Loading active Deriv markets…</div></div></div>
@@ -50,12 +50,13 @@
 <section id="trading" class="page">
   <div class="page-heading"><div><span class="eyebrow">TRADE MANAGEMENT</span><h1>Trading</h1></div><span class="demo-chip">DEMO ONLY</span></div>
   <div class="trade-summary">
+    <div><small>ACCOUNT BALANCE</small><b id="tradeAccountBalance">—</b></div>
     <div><small>OPEN POSITIONS</small><b id="openPositions">0</b></div>
     <div><small>SESSION P/L</small><b id="tradePL">0.00</b></div>
     <div><small>BOT STATUS</small><b id="tradeBotStatus">STOPPED</b></div>
   </div>
-  <div class="trade-tabs"><button class="selected">Positions</button><button>Pending orders</button><button>Weekly orders</button></div>
-  <div class="empty-state"><span class="empty-icon">⌁</span><b>No open positions</b><small>Connect your Deriv Demo account to monitor positions here.</small><button class="outline-btn" data-jump="assets">Connect Demo account</button></div>
+  <div class="trade-tabs"><button class="selected" data-order-tab="positions">Positions</button><button data-order-tab="pending">Pending orders</button></div>
+  <section class="panel position-panel"><div class="panelHead"><div><span class="eyebrow">DERIV ACCOUNT</span><h2 id="positionsTitle">Open positions</h2></div><span id="positionsUpdated" class="subtle-pill">Not connected</span></div><div id="positionsList" class="account-list"><div class="feed-placeholder">Connect your Deriv Demo account to load positions.</div></div></section>
   <section id="execution" class="panel">
     <div class="panelHead"><div><span class="eyebrow">BOT CONTROL</span><h2>Automatic trading</h2></div><span id="modePill" class="pill">DEMO ONLY · LOCKED</span></div>
     <div class="mode-warning"><strong>Demo-only safety lock</strong><span>This deployment accepts Demo accounts only. Real accounts are rejected by the server.</span></div>
@@ -116,7 +117,7 @@
 <script>
 document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b===btn));document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active-page',p.id===btn.dataset.tab));window.scrollTo({top:0,behavior:'smooth'});}));
 document.querySelectorAll('[data-jump]').forEach(btn=>btn.addEventListener('click',()=>document.querySelector('[data-tab="'+btn.dataset.jump+'"]').click()));
-const syncAccountUI=()=>{const b=document.getElementById('balance').textContent;document.getElementById('assetsBalance').textContent=b;document.getElementById('assetsAccountType').textContent=document.getElementById('accountType').textContent;document.getElementById('assetsPL').textContent=document.getElementById('sessionPL').textContent;document.getElementById('tradePL').textContent=document.getElementById('sessionPL').textContent;document.getElementById('tradeBotStatus').textContent=document.getElementById('botStatus').textContent;};
+const syncAccountUI=()=>{const b=document.getElementById('balance').textContent;for(const id of ['assetsBalance','tradeAccountBalance','marketAccountBalance']){const el=document.getElementById(id);if(el)el.textContent=id==='marketAccountBalance'?'Balance '+b:b;}document.getElementById('assetsAccountType').textContent=document.getElementById('accountType').textContent;document.getElementById('assetsPL').textContent=document.getElementById('sessionPL').textContent;document.getElementById('tradePL').textContent=document.getElementById('sessionPL').textContent;document.getElementById('tradeBotStatus').textContent=document.getElementById('botStatus').textContent;};
 new MutationObserver(syncAccountUI).observe(document.getElementById('balance'),{childList:true,characterData:true,subtree:true});
 new MutationObserver(syncAccountUI).observe(document.getElementById('accountType'),{childList:true,characterData:true,subtree:true});
 new MutationObserver(syncAccountUI).observe(document.getElementById('sessionPL'),{childList:true,characterData:true,subtree:true});
