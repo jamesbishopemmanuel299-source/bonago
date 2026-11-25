@@ -11,7 +11,7 @@ function handleMessage(ev){let d;try{d=JSON.parse(ev.data)}catch{return}if(d.req
 async function loadDerivAccounts(){
   const statusResponse=await fetch("/api/deriv/status",{credentials:"same-origin"});
   const status=await statusResponse.json();
-  if(!status.connected){$("derivAccount").innerHTML='<option value="">Deriv connection unavailable</option>';$("connectBtn").disabled=true;setMsg("connectMessage",status.error||"Add DERIV_CLIENT_ID and DERIV_ACCESS_TOKEN in Render Environment, then redeploy.");return false}
+  if(!status.connected){$("derivAccount").innerHTML='<option value="">Deriv connection unavailable</option>';$("connectBtn").disabled=true;setMsg("connectMessage",status.error||"Add DERIV_CLIENT_ID (or DERIV_APP_ID) and DERIV_ACCESS_TOKEN in Render Environment, then redeploy.");return false}
   const response=await fetch("/api/deriv/accounts",{credentials:"same-origin"});
   const data=await response.json();
   if(!response.ok)throw Error("Deriv account request failed (HTTP "+response.status+"): "+(data.error||"Unknown Deriv API error")+(data.code?" ["+data.code+"]":""));
@@ -28,12 +28,12 @@ async function loadDerivAccounts(){
   });
   $("connectBtn").disabled=data.accounts.length===0;
   if(!data.accounts.length)setMsg("connectMessage","No Options accounts were returned for this Deriv login.");
-  else setMsg("connectMessage","Deriv Demo account loaded from Render secrets. Real accounts are blocked.");
+  else setMsg("connectMessage","Demo account detected. BONAGO will connect automatically; Real accounts are blocked.");
   return data.accounts.length>0;
 }
 async function connect(){
   const accountSelect=$("derivAccount"),option=accountSelect.options[accountSelect.selectedIndex];
-  if(!option||!option.value){setMsg("connectMessage","Sign in with Deriv and select an account first.");return}
+  if(!option||!option.value){setMsg("connectMessage","No Demo account was found for the Render access token.");return}
   const isVirtual=option.dataset.virtual==="true";
   if(!isVirtual){setMsg("connectMessage","BONAGO is locked to Demo accounts. Real-account connections are disabled.");return}
   $("connectBtn").disabled=true;setMsg("connectMessage","Requesting a secure one-time WebSocket connection from Deriv…");
@@ -52,7 +52,7 @@ async function connect(){
     $("botStatus").textContent="STOPPED";$("modeLabel").textContent=isVirtual?"Demo mode":"LIVE account";
     $("connectBtn").disabled=true;$("disconnectBtn").disabled=false;$("startBtn").disabled=false;$("manualCallBtn").disabled=false;$("manualPutBtn").disabled=false;
     setMsg("connectMessage","Securely connected to "+(isVirtual?"Deriv Demo":"Deriv Real")+" account.");
-    log("Connected to "+authorized.loginid+" using the server-side Render access token and Deriv OTP.");
+    log("Automatically connected to "+authorized.loginid+" using the server-side Render credentials and Deriv OTP.");
     try{await send({balance:1,subscribe:1})}catch(e){log("Balance subscription unavailable: "+e.message)}
     try{await send({transaction:1,subscribe:1})}catch(e){log("Transaction notifications unavailable: "+e.message)}
     await refreshPortfolio();
@@ -120,7 +120,7 @@ document.querySelectorAll("[data-order-tab]").forEach(btn=>btn.addEventListener(
     const available=await loadDerivAccounts();
     if(available){
       setMsg("connectMessage","Demo account found. Connecting automatically…");
-      log("Demo account found. Starting secure automatic connection.");
+      log("Demo account found. Starting secure automatic connection; no manual broker sign-in is needed.");
       await connect();
     }
   }catch(error){
