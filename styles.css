@@ -20,3 +20,14 @@ button,input,select{font:inherit}button{cursor:pointer}.app-shell{max-width:900p
 .change.negative{background:#45212b;color:#ff8798}
 #marketRows .market-row{cursor:default}
 #marketRows .market-row:hover{background:#171f2a}
+
+.account-chip{display:inline-flex;align-items:center;white-space:nowrap;padding:7px 9px;border:1px solid #2c3c52;background:#152238;border-radius:9px;color:#a9caff;font-size:9px;font-weight:700;font-variant-numeric:tabular-nums}
+.account-list{display:flex;flex-direction:column;gap:8px}
+.account-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;background:#0d131b;border:1px solid #26313e;border-radius:10px}
+.account-row b,.account-row small{display:block}
+.account-row b{font-size:11px;line-height:1.45}
+.account-row small{font-size:9px;color:#8794a5;margin-top:5px;line-height:1.4}
+.account-value{text-align:right;white-space:nowrap}
+.position-panel{margin-top:12px}
+.trade-summary{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:520px){.trade-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.page-heading{flex-wrap:wrap}.account-chip{font-size:8px;padding:6px}}
