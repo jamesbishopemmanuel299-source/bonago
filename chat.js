@@ -20,7 +20,7 @@
  else if(d.intent==="analyze"){addMessage("assistant","I’ve configured the requested market. To analyse live candles and act on signals, use Start automatic trading in the Trading tab. No trade has been placed.");}
  else addMessage("assistant","Configuration saved in this session. No trade has been placed. When ready, start Demo automation from Trading.");
  syncStats();
- }catch(e){wait.textContent="I couldn't process that command: "+e.message+" No trade was placed."}finally{send.disabled=false;syncStats()}}
+ }catch(e){if(wait.isConnected)wait.textContent="I couldn't process that command: "+e.message+" No trade was placed.";else addMessage("assistant","I couldn't process that command: "+e.message+" No trade was placed.")}finally{send.disabled=false;syncStats()}}
  send.addEventListener("click",submit);input.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();submit()}});
  document.querySelectorAll("[data-prompt]").forEach(b=>b.addEventListener("click",()=>{input.value=b.dataset.prompt;submit()}));
  $("newChat").addEventListener("click",()=>{messages.replaceChildren();addMessage("assistant","New conversation started. Paste a Demo trading command when ready.");});
