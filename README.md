@@ -22,6 +22,8 @@ Do not commit access tokens, OAuth credentials, or session secrets to GitHub.
 5. Select **Sign in with Deriv**, approve the requested permissions, and select a Demo or Real account.
 6. BONAGO's server exchanges the authorization code using PKCE, keeps the access token server-side, and requests a short-lived authenticated WebSocket URL for the selected account.
 
+Token selection: BONAGO prefers `DERIV_ACCESS_TOKEN`; if it is absent, it automatically falls back to `DERIV_DEMO_ACCESS_TOKEN`. If neither is configured, it uses the secure Deriv OAuth sign-in session. The deployment remains server-locked to Demo accounts and never returns either token to the browser.
+
 The browser never receives the long-lived OAuth access token. The OTP URL is short-lived and one-use; BONAGO requests a new one when the user reconnects. Deriv access tokens expire and Deriv does not issue refresh tokens, so users must sign in again after expiry.
 
 ## API migration status
