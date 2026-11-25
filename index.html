@@ -123,17 +123,17 @@
   <div class="page-heading"><div><span class="eyebrow">ACCOUNT CENTER</span><h1>Assets</h1></div><span class="demo-chip">DEMO</span></div>
   <article class="assets-overview">
     <small>MY ASSETS</small><strong id="assetsBalance">—</strong><span id="assetsAccountType">Connect your Deriv Demo account</span>
-    <div class="asset-actions"><button class="primary" id="assetsConnect" onclick="document.getElementById('connectBtn').click()">Connect</button><button class="ghost" id="disconnectBtn" disabled>Disconnect</button></div>
+    <div class="asset-actions"><span class="secure-tag"><span class="secure-dot"></span> AUTO CONNECT</span><button class="ghost" id="disconnectBtn" disabled>Disconnect</button></div>
     <div class="assets-pnl"><span>Today's P/L</span><b id="assetsPL">0.00</b></div>
   </article>
   <section class="panel" id="connection">
     <div class="panelHead"><div><span class="eyebrow">SECURE CONNECTION</span><h2>Deriv Demo account</h2></div><span class="secure-tag"><span class="secure-dot"></span> SERVER SECURED</span></div>
-    <p class="panel-description">Choose a Demo account available to your configured Deriv login.</p>
-    <label>Available Demo account<select id="derivAccount"><option value="">Loading accounts from Render secrets…</option></select></label>
-    <div class="message">BONAGO reads <b>DERIV_CLIENT_ID</b>, <b>DERIV_APP_ID</b> and <b>DERIV_ACCESS_TOKEN</b> from your private Render environment. Secrets are never shown in this page.</div>
-    <div class="actions"><button id="connectBtn" disabled>Connect selected Demo account →</button></div>
-    <p class="hint">The server verifies the account is virtual before issuing a short-lived authenticated WebSocket URL. Live accounts remain blocked.</p>
-    <div id="connectMessage" class="message status-message">Checking Deriv configuration…</div>
+    <p class="panel-description">BONAGO reads your private Render credentials, finds the first available Demo account and connects automatically when the app opens.</p>
+    <label id="accountPickerLabel" hidden>Detected Demo account<select id="derivAccount"><option value="">Reading secure Render credentials…</option></select></label>
+    <div class="message">Secure automatic connection uses <b>DERIV_ACCESS_TOKEN</b> and <b>DERIV_CLIENT_ID</b> (or <b>DERIV_APP_ID</b>) stored in Render Environment. No token entry or manual broker sign-in is required. Secrets never reach this page.</div>
+    <div class="actions" hidden><button id="connectBtn" disabled>Auto connect</button></div>
+    <p class="hint">The server verifies that the account is virtual before connecting. Real accounts and Live trading remain blocked. Use Disconnect only when you intentionally want to end the session.</p>
+    <div id="connectMessage" class="message status-message">Reading Render credentials and connecting to Deriv Demo automatically…</div>
   </section>
   <div class="assets-info"><span>▣</span><div><b>Trading account</b><small>Demo balance and activity are loaded from Deriv after a successful connection.</small></div></div>
   <div class="assets-info"><span>◈</span><div><b>Security</b><small>Your access token stays on the server. Never share it in chat or enter it into the browser.</small></div></div>
