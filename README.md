@@ -8,6 +8,8 @@ Configure these environment variables in the BONAGO Render service:
 
 - `DERIV_CLIENT_ID`: your registered Deriv OAuth 2.0 Client ID (used for Deriv sign-in).
 - `DERIV_APP_ID`: your numeric Deriv application ID (used in the `Deriv-App-ID` API header; keep it separate from the OAuth Client ID).
+- `DERIV_ACCESS_TOKEN`: optional primary Deriv token; stored only in Render and checked first.
+- `DERIV_DEMO_ACCESS_TOKEN`: optional Demo fallback token; used automatically if the primary token is missing, rejected, or cannot find the selected Demo account.
 - `DERIV_REDIRECT_URI`: `https://bonago-1.onrender.com/auth/deriv/callback` (must exactly match the redirect URL registered with Deriv).
 - `SESSION_SECRET`: a long, random secret. Render can generate this automatically from `render.yaml`.
 
