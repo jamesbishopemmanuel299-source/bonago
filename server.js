@@ -8,9 +8,11 @@ const ROOT = __dirname;
 const DERIV_CLIENT_ID = process.env.DERIV_CLIENT_ID || "";
 const DERIV_APP_ID = process.env.DERIV_APP_ID || "";
 const DERIV_ACCESS_TOKEN = process.env.DERIV_ACCESS_TOKEN || "";
+const DERIV_DEMO_ACCESS_TOKEN = process.env.DERIV_DEMO_ACCESS_TOKEN || "";
 const DERIV_REDIRECT_URI = process.env.DERIV_REDIRECT_URI || "https://bonago-1.onrender.com/auth/deriv/callback";
 const SESSION_SECRET = process.env.SESSION_SECRET || "";
 const DEMO_ONLY = true; // Server-enforced: this deployment cannot authorize Real accounts.
+const RENDER_TOKEN_SOURCE = DERIV_ACCESS_TOKEN ? "render-live-token" : (DERIV_DEMO_ACCESS_TOKEN ? "render-demo-fallback" : "oauth-session");
 
 // Deriv PAT requests require Deriv-App-ID. For this deployment, use the configured
 // client/app identifier without exposing it to the browser.
@@ -58,7 +60,10 @@ app.get("/health", (_req, res) => res.status(200).json({
   ok: true,
   service: "BONAGO",
   derivOAuthConfigured: Boolean(DERIV_CLIENT_ID && SESSION_SECRET),
-  derivSecretConfigured: Boolean((DERIV_APP_ID || DERIV_CLIENT_ID) && DERIV_ACCESS_TOKEN),
+  derivSecretConfigured: Boolean((DERIV_APP_ID || DERIV_CLIENT_ID) && (DERIV_ACCESS_TOKEN || DERIV_DEMO_ACCESS_TOKEN)),
+  derivLiveTokenConfigured: Boolean(DERIV_ACCESS_TOKEN),
+  derivDemoFallbackConfigured: Boolean(DERIV_DEMO_ACCESS_TOKEN),
+  tokenSource: RENDER_TOKEN_SOURCE,
   derivAppIdConfigured: Boolean(DERIV_APP_ID || DERIV_CLIENT_ID),
   mode: "demo-only"
 }));
@@ -68,6 +73,9 @@ app.get("/health", (_req, res) => res.status(200).json({
 app.get("/api/config", (_req, res) => res.json({
   derivOAuthConfigured: Boolean(DERIV_CLIENT_ID && SESSION_SECRET),
   derivAppIdConfigured: Boolean(DERIV_APP_ID || DERIV_CLIENT_ID),
+  derivLiveTokenConfigured: Boolean(DERIV_ACCESS_TOKEN),
+  derivDemoFallbackConfigured: Boolean(DERIV_DEMO_ACCESS_TOKEN),
+  tokenSource: RENDER_TOKEN_SOURCE,
   mode: "demo-only",
   redirectUri: DERIV_REDIRECT_URI
 }));
@@ -129,7 +137,7 @@ app.get("/auth/deriv/callback", async (req, res) => {
 });
 
 function getDerivSession(req) {
-  if ((DERIV_APP_ID || DERIV_CLIENT_ID) && DERIV_ACCESS_TOKEN) return { accessToken: DERIV_ACCESS_TOKEN, expiresAt: Number.MAX_SAFE_INTEGER };
+  if ((DERIV_APP_ID || DERIV_CLIENT_ID) && (DERIV_ACCESS_TOKEN || DERIV_DEMO_ACCESS_TOKEN)) return { accessToken: DERIV_ACCESS_TOKEN || DERIV_DEMO_ACCESS_TOKEN, tokenSource: DERIV_ACCESS_TOKEN ? "render-live-token" : "render-demo-fallback", expiresAt: Number.MAX_SAFE_INTEGER };
   const sid = verifyCookie(cookieValue(req, "bonago_sid"));
   const session = sid && sessions.get(sid);
   if (!session || session.expiresAt <= Date.now()) {
@@ -161,7 +169,7 @@ app.get("/api/deriv/accounts", async (req, res) => {
       loginid: account.loginid || account.account_id || account.id,
       is_virtual: account.is_virtual === true || String(account.account_type || account.account_category || "").toLowerCase() === "demo"
     })).filter(account => account.account_id && account.is_virtual);
-    return res.json({ accounts, mode: "demo-only" });
+    return res.json({ accounts, mode: "demo-only", tokenSource: session.tokenSource || "oauth-session", liveTokenConfigured: Boolean(DERIV_ACCESS_TOKEN), demoFallbackConfigured: Boolean(DERIV_DEMO_ACCESS_TOKEN) });
   } catch (error) {
     console.error("Deriv accounts request failed:", error.message);
     return res.status(502).json({ error: "Could not reach Deriv account service." });
@@ -203,7 +211,7 @@ app.post("/api/deriv/otp", express.json(), async (req, res) => {
 });
 
 app.get("/api/deriv/status", (req, res) => {
-  if ((DERIV_APP_ID || DERIV_CLIENT_ID) && DERIV_ACCESS_TOKEN) return res.json({ connected: true, source: "render-secrets" });
+  if ((DERIV_APP_ID || DERIV_CLIENT_ID) && (DERIV_ACCESS_TOKEN || DERIV_DEMO_ACCESS_TOKEN)) return res.json({ connected: true, source: DERIV_ACCESS_TOKEN ? "render-live-token" : "render-demo-fallback", mode: "demo-only", liveTokenConfigured: Boolean(DERIV_ACCESS_TOKEN), demoFallbackConfigured: Boolean(DERIV_DEMO_ACCESS_TOKEN) });
   const sid = verifyCookie(cookieValue(req, "bonago_sid"));
   const session = sid && sessions.get(sid);
   if (!session || session.expiresAt <= Date.now()) {
