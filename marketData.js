@@ -183,16 +183,15 @@
     const rect=chartCanvas.getBoundingClientRect(),dpr=Math.max(1,window.devicePixelRatio||1),w=Math.max(1,rect.width),h=Math.max(1,rect.height);
     if(chartCanvas.width!==Math.round(w*dpr)||chartCanvas.height!==Math.round(h*dpr)){chartCanvas.width=Math.round(w*dpr);chartCanvas.height=Math.round(h*dpr);}
     chartCtx.setTransform(dpr,0,0,dpr,0,0);chartCtx.clearRect(0,0,w,h);
-    const pts=chartState.points;if(pts.length<2){chartCtx.fillStyle="#8796a9";chartCtx.font="12px sans-serif";chartCtx.fillText("Loading live market candles…",14,h/2);return;}
-    const values=pts.map(p=>p.close),min=Math.min(...values),max=Math.max(...values),range=max-min||Math.max(Math.abs(max)*.0001,1),left=8,right=w-64,top=12,bottom=h-18;
+    const pts=chartState.points;if(pts.length<2){chartCtx.fillStyle="#8796a9";chartCtx.font="12px sans-serif";chartCtx.fillText("Loading live Deriv candles…",14,h/2);return;}
+    const values=pts.flatMap(p=>[p.high,p.low,p.open,p.close]).filter(Number.isFinite),min=Math.min(...values),max=Math.max(...values),range=max-min||Math.max(Math.abs(max)*.0001,1),left=8,right=w-66,top=14,bottom=h-24;
     chartCtx.font="9px sans-serif";chartCtx.strokeStyle="#243243";chartCtx.fillStyle="#8796a9";chartCtx.lineWidth=1;
-    for(let i=0;i<4;i++){const y=top+(bottom-top)*i/3;chartCtx.beginPath();chartCtx.moveTo(left,y);chartCtx.lineTo(right,y);chartCtx.stroke();const v=max-(range*i/3);chartCtx.fillText(v.toFixed(Math.abs(v)<10?4:2),right+5,y+3);}
-    const x=i=>left+(right-left)*i/(pts.length-1),y=v=>bottom-(v-min)/range*(bottom-top);
-    chartCtx.beginPath();pts.forEach((p,i)=>i?chartCtx.lineTo(x(i),y(p.close)):chartCtx.moveTo(x(i),y(p.close)));chartCtx.lineTo(right,bottom);chartCtx.lineTo(left,bottom);chartCtx.closePath();chartCtx.fillStyle="rgba(45,151,222,.10)";chartCtx.fill();
-    chartCtx.beginPath();pts.forEach((p,i)=>i?chartCtx.lineTo(x(i),y(p.close)):chartCtx.moveTo(x(i),y(p.close)));chartCtx.strokeStyle="#43a9f5";chartCtx.lineWidth=2;chartCtx.stroke();
-    const last=pts[pts.length-1],py=y(last.close);chartCtx.setLineDash([4,4]);chartCtx.strokeStyle="#43a9f5";chartCtx.beginPath();chartCtx.moveTo(left,py);chartCtx.lineTo(right,py);chartCtx.stroke();chartCtx.setLineDash([]);
+    for(let i=0;i<4;i++){const gy=top+(bottom-top)*i/3;chartCtx.beginPath();chartCtx.moveTo(left,gy);chartCtx.lineTo(right,gy);chartCtx.stroke();const v=max-(range*i/3);chartCtx.fillText(v.toFixed(Math.abs(v)<10?4:2),right+5,gy+3);}
+    const y=v=>bottom-(v-min)/range*(bottom-top),step=(right-left)/pts.length,bodyWidth=Math.max(2,Math.min(11,step*.62));
+    pts.forEach((p,i)=>{const cx=left+step*(i+.5),up=p.close>=p.open,col=up?"#18c995":"#ef5d72";chartCtx.strokeStyle=col;chartCtx.fillStyle=col;chartCtx.lineWidth=1;chartCtx.beginPath();chartCtx.moveTo(cx,y(p.high));chartCtx.lineTo(cx,y(p.low));chartCtx.stroke();const topBody=Math.min(y(p.open),y(p.close)),bodyHeight=Math.max(1,Math.abs(y(p.open)-y(p.close)));chartCtx.fillRect(cx-bodyWidth/2,topBody,bodyWidth,bodyHeight);});
+    const last=pts[pts.length-1],py=y(last.close);chartCtx.setLineDash([4,4]);chartCtx.strokeStyle="#7da9ff";chartCtx.beginPath();chartCtx.moveTo(left,py);chartCtx.lineTo(right,py);chartCtx.stroke();chartCtx.setLineDash([]);
     const price=$("chartCurrentPrice");if(price)price.textContent=priceText(last.close,chartState.pip);
-    const change=$("chartPriceChange");if(change){const first=pts[0].close,pct=first?((last.close-first)/first)*100:0;change.textContent=(pct>=0?"+":"")+pct.toFixed(2)+"% during this chart window";change.style.color=pct>=0?"#49d6a4":"#ff8297";}
+    const change=$("chartPriceChange");if(change){const first=pts[0].close,pct=first?((last.close-first)/first)*100:0;change.textContent=(pct>=0?"+":"")+pct.toFixed(2)+"% over visible candles";change.style.color=pct>=0?"#49d6a4":"#ff8297";}
     const updated=$("chartLastUpdated");if(updated)updated.textContent="Updated "+new Date().toLocaleTimeString();
   }
   function chartConnect(){
