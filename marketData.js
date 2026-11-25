@@ -10,7 +10,8 @@
     if (m.includes("synthetic") || m.includes("derived") || sub.includes("synthetic")) return "synthetic";
     if (m.includes("crypto") || sub.includes("cryptocurrency")) return "crypto";
     if (m.includes("commodit") || sub.includes("metal") || sub.includes("energy") || sub.includes("oil")) return "commodities";
-    if (m.includes("stock") || m.includes("index") || m.includes("indice") || sub.includes("stock") || sub.includes("indice")) return "stocks";
+    if (m.includes("stock") || m.includes("index") || m.includes("indice") || m.includes("indices") || sub.includes("stock") || sub.includes("indice") || sub.includes("indices")) return "stocks";
+    if (m.includes("derived") || sub.includes("derived") || m.includes("random") || sub.includes("random")) return "synthetic";
     return "other";
   };
   const categoryLabel = c => ({forex:"Forex",synthetic:"Synthetic",crypto:"Crypto",commodities:"Commodity",stocks:"Stock / Index",other:"Market"}[c] || "Market");
@@ -102,13 +103,13 @@
     });
   }
   function pickSymbols(raw) {
-    const list = (Array.isArray(raw)?raw:[]).filter(s=>s && s.symbol && s.display_name && categoryOf(s)!=="other" && !s.is_trading_suspended);
+    const list = (Array.isArray(raw)?raw:[]).filter(s=>s && typeof s.symbol==="string" && s.symbol.length>0 && !s.is_trading_suspended).map(s=>({...s,display_name:s.display_name||s.symbol}));
     const rank = {synthetic:0,forex:1,crypto:2,commodities:3,stocks:4};
     list.sort((a,b)=>(rank[categoryOf(a)]??9)-(rank[categoryOf(b)]??9) || String(a.display_name).localeCompare(String(b.display_name)));
     const seen=new Set();
     state.symbols=list.filter(s=>{if(seen.has(s.symbol))return false;seen.add(s.symbol);return true}).slice(0,MAX_MARKETS);
     render();
-    if (!state.symbols.length) {setStatus("NO ACTIVE SYMBOLS",false);return}
+    if (!state.symbols.length) {setStatus("NO SYMBOL DATA · CHECK DERIV RESPONSE",false);console.warn("Deriv active_symbols returned no usable symbols",raw);return}
     setStatus("LIVE · "+state.symbols.length+" MARKETS",true);
     // Deriv supports a symbol array for a single real-time tick subscription.
     try { state.socket.send(JSON.stringify({ticks:state.symbols.map(s=>s.symbol),subscribe:1,req_id:2})); }
@@ -128,11 +129,11 @@
     clearTimeout(state.timer);
     setStatus("CONNECTING TO DERIV",false);
     const ws=new WebSocket(ENDPOINT);state.socket=ws;
-    ws.onopen=()=>{state.connected=true;state.retry=0;setStatus("LOADING DERIV SYMBOLS",true);ws.send(JSON.stringify({active_symbols:"full",req_id:1}));};
+    ws.onopen=()=>{state.connected=true;state.retry=0;setStatus("LOADING DERIV SYMBOLS",true);ws.send(JSON.stringify({active_symbols:"brief",req_id:1}));};
     ws.onmessage=event=>{
       let data;try{data=JSON.parse(event.data)}catch{return}
-      if(data.error){setStatus("DERIV FEED ERROR",false);console.warn("Deriv market feed:",data.error.message);return}
-      if(data.msg_type==="active_symbols")pickSymbols(data.active_symbols||data.activeSymbols||[]);
+      if(data.error){setStatus("DERIV ERROR · "+String(data.error.code||"API"),false);console.warn("Deriv market feed:",data.error.message,data.error);return}
+      if(data.msg_type==="active_symbols")pickSymbols(data.active_symbols||data.activeSymbols||data?.active_symbols?.active_symbols||[]);
       if(data.msg_type==="tick"&&data.tick)updateQuote(data.tick);
     };
     ws.onerror=()=>setStatus("FEED CONNECTION ERROR",false);
