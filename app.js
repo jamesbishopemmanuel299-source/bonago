@@ -84,7 +84,7 @@ async function onCandle(c){
  aiRequestInFlight=true; setMsg("botMessage","Groq GPT-OSS 120B analysing market candles…");
  try {
   const r=await fetch("/api/ai/analyze",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({symbol:$("symbol").value,candles:candleData.slice(-60)})});
-  const d=await r.json(); if(!r.ok)throw Error(d.error||"AI analysis failed");
+  const d=await r.json(); if(!r.ok){const detail=[d.providerStatus?"HTTP "+d.providerStatus:"",d.providerCode||"",d.providerMessage||""].filter(Boolean).join(" · ");throw Error([d.error||"AI analysis failed",detail].filter(Boolean).join(" | "))}
   const stake=Number($("stake").value);
   const checks=[
    {label:"AI signal is CALL or PUT (not HOLD)",ok:d.action==="CALL"||d.action==="PUT"},
