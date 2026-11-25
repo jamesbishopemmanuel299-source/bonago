@@ -43,3 +43,124 @@ button,input,select{font:inherit}button{cursor:pointer}.app-shell{max-width:900p
 .ai-disclaimer{color:#7f8d9e;font-size:9px;line-height:1.6;margin:11px 1px 0}
 #aiDecisionBadge{white-space:nowrap}
 @media(max-width:420px){.ai-decision-grid{grid-template-columns:1fr 1fr}.ai-decision-grid>div:last-child{grid-column:1/-1}}
+
+
+/* BONAGO · Dynamic Liquid Glass interface */
+:root{
+  --bg:#070b13;
+  --panel:rgba(18,27,43,.58);
+  --panel2:rgba(27,40,61,.52);
+  --line:rgba(190,216,255,.16);
+  --text:#f4f8ff;
+  --muted:#a1b0c5;
+  --blue:#70a8ff;
+  --green:#55e6bd;
+  --red:#ff718d;
+  --gold:#f4d17d;
+}
+html{background:#070b13}
+body{
+  background:
+    radial-gradient(ellipse at 12% 4%,rgba(54,112,206,.28),transparent 34rem),
+    radial-gradient(ellipse at 88% 22%,rgba(115,73,201,.20),transparent 31rem),
+    radial-gradient(ellipse at 52% 92%,rgba(20,161,158,.13),transparent 34rem),
+    linear-gradient(145deg,#070b13 0%,#0b1220 48%,#080d17 100%);
+  background-attachment:fixed;
+}
+body:before,body:after{
+  content:"";position:fixed;z-index:-1;pointer-events:none;border-radius:50%;
+  filter:blur(2px);opacity:.55;animation:liquidDrift 18s ease-in-out infinite alternate;
+}
+body:before{width:290px;height:290px;top:13%;right:-150px;background:radial-gradient(circle,rgba(72,139,255,.23),transparent 70%)}
+body:after{width:340px;height:340px;bottom:8%;left:-190px;background:radial-gradient(circle,rgba(46,211,190,.16),transparent 70%);animation-delay:-8s}
+@keyframes liquidDrift{from{transform:translate3d(0,-12px,0) scale(.94)}to{transform:translate3d(24px,28px,0) scale(1.12)}}
+.app-shell{isolation:isolate}
+.mobile-top{
+  background:rgba(8,14,25,.62);backdrop-filter:blur(26px) saturate(165%);
+  -webkit-backdrop-filter:blur(26px) saturate(165%);
+  border-bottom:1px solid rgba(198,220,255,.12);
+  box-shadow:0 8px 35px rgba(0,0,0,.18)
+}
+.brand-mark{background:linear-gradient(145deg,rgba(126,180,255,.98),rgba(69,103,224,.78));box-shadow:inset 0 1px 1px #ffffff80,0 6px 24px #377bff55}
+.avatar{background:linear-gradient(145deg,rgba(60,91,139,.72),rgba(21,34,55,.78));border-color:rgba(190,218,255,.25);box-shadow:inset 0 1px 1px #ffffff25}
+.main-content{position:relative}
+.panel,.market-card,.market-list,.mini-stat,.trade-summary>div,.quick-action,.assets-info,.assets-overview,.empty-state,.account-row,.ai-explain-block,.ai-decision-grid>div,.search-box{
+  background:linear-gradient(145deg,rgba(29,43,65,.64),rgba(12,20,34,.58));
+  border:1px solid rgba(190,216,255,.15);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 12px 34px rgba(0,0,0,.18);
+  backdrop-filter:blur(22px) saturate(150%);
+  -webkit-backdrop-filter:blur(22px) saturate(150%);
+}
+.panel{border-radius:20px}
+.hero-balance{
+  position:relative;overflow:hidden;
+  background:linear-gradient(125deg,rgba(49,100,177,.74),rgba(25,49,91,.72) 55%,rgba(25,32,65,.78));
+  border:1px solid rgba(164,204,255,.30);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.23),0 18px 55px rgba(14,54,120,.25);
+  backdrop-filter:blur(24px) saturate(160%);
+}
+.hero-balance:after,.assets-overview:after{
+  content:"";position:absolute;inset:-70% -35% auto auto;width:70%;height:150%;
+  background:linear-gradient(110deg,transparent,rgba(255,255,255,.12),transparent);
+  transform:rotate(18deg);pointer-events:none
+}
+.assets-overview{position:relative;overflow:hidden;border-radius:19px}
+.quick-action{transition:transform .22s ease,border-color .22s ease,background .22s ease}
+.quick-action:hover,.quick-action:focus-visible{transform:translateY(-3px);border-color:rgba(135,184,255,.42);background:linear-gradient(145deg,rgba(50,76,115,.72),rgba(17,29,47,.7))}
+.quick-icon{box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+.demo-chip,.badge,.market-live,.account-chip,.pill,.subtle-pill{
+  border:1px solid rgba(180,211,255,.15);
+  background:rgba(70,111,175,.20);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)
+}
+.badge.off{background:rgba(176,53,79,.2);border-color:rgba(255,126,151,.22)}
+.badge.on{background:rgba(26,156,117,.2);border-color:rgba(85,230,189,.24)}
+.ticker-strip span{background:rgba(24,38,59,.54);border-color:rgba(190,216,255,.13);backdrop-filter:blur(14px)}
+.market-row{border-color:rgba(190,216,255,.09)}
+.market-row:hover{background:rgba(89,137,203,.10)}
+.market-tabs,.trade-tabs{border-color:rgba(190,216,255,.14)}
+.market-tabs button.selected,.trade-tabs button.selected{color:#9bc3ff;border-bottom-color:#83b5ff}
+input,select,textarea{
+  background:rgba(6,13,24,.58);border-color:rgba(190,216,255,.18);
+  color:#f4f8ff;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)
+}
+input:focus,select:focus,textarea:focus{outline:2px solid rgba(112,168,255,.78);border-color:rgba(144,190,255,.55);box-shadow:0 0 0 4px rgba(76,137,232,.13)}
+.primary,.actions button:not(.secondary):not(.danger){
+  background:linear-gradient(135deg,#78b4ff,#477ce9);
+  border:1px solid rgba(208,230,255,.34);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.32),0 7px 22px rgba(48,111,220,.24);
+  transition:transform .18s ease,filter .18s ease
+}
+.primary:hover,.actions button:not(.secondary):not(.danger):hover{filter:brightness(1.1);transform:translateY(-1px)}
+.ghost,.outline-btn,.actions .secondary{
+  background:rgba(190,216,255,.08);border-color:rgba(190,216,255,.2);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)
+}
+.bottom-nav{
+  background:rgba(14,23,38,.68);border:1px solid rgba(198,222,255,.22);
+  backdrop-filter:blur(30px) saturate(180%);-webkit-backdrop-filter:blur(30px) saturate(180%);
+  box-shadow:0 18px 55px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.14)
+}
+.bottom-nav button{min-height:52px;transition:color .18s ease,transform .18s ease}
+.bottom-nav button.active{color:#9bc5ff}
+.bottom-nav button.active span{filter:drop-shadow(0 0 9px rgba(104,166,255,.9))}
+.ai-decision-panel{background:linear-gradient(145deg,rgba(23,44,71,.70),rgba(13,22,37,.66));border-color:rgba(121,175,255,.28)}
+.ai-decision-grid>div{background:rgba(8,17,31,.48)}
+.ai-explain-block{background:rgba(8,16,29,.44)}
+.mode-warning,.strategy-note{background:rgba(116,83,31,.20);border-color:rgba(238,192,102,.24);backdrop-filter:blur(14px)}
+.message,.log{background:rgba(6,13,23,.48);border-color:rgba(190,216,255,.14)}
+.section-title h2,.panelHead h2{letter-spacing:-.035em}
+.page.active-page{animation:glassEnter .32s cubic-bezier(.2,.75,.25,1)}
+@keyframes glassEnter{from{opacity:0;transform:translateY(9px);filter:blur(3px)}to{opacity:1;transform:none;filter:blur(0)}}
+button:focus-visible{outline:2px solid #9bc5ff;outline-offset:3px}
+@media(max-width:520px){
+  .panel,.assets-overview,.hero-balance{border-radius:17px}
+  .bottom-nav{width:calc(100% - 22px);bottom:max(8px,env(safe-area-inset-bottom))}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  body:before,body:after{animation:none}
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .mobile-top,.panel,.market-card,.market-list,.mini-stat,.trade-summary>div,.quick-action,.bottom-nav,.assets-info,.assets-overview{background:#111c2d}
+}
