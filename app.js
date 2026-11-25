@@ -68,6 +68,17 @@ function stopBot(reason="Bot stopped by user."){botRunning=false;$("botStatus").
 $("connectBtn").addEventListener("click",connect);
 document.querySelectorAll("[data-order-tab]").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll("[data-order-tab]").forEach(x=>x.classList.toggle("selected",x===btn));const title=$("positionsTitle"),list=$("positionsList");if(btn.dataset.orderTab==="positions"){title.textContent="Open positions";renderPortfolio()}else{title.textContent="Pending orders";list.replaceChildren();const note=document.createElement("div");note.className="feed-placeholder";note.textContent="Deriv Options API does not expose a pending-orders list for these contracts. No pending orders can be confirmed here.";list.append(note)}}));$("disconnectBtn").addEventListener("click",()=>{stopBot("Disconnected by user.");disconnect()});$("startBtn").addEventListener("click",startBot);$("stopBtn").addEventListener("click",()=>stopBot());$("panicBtn").addEventListener("click",()=>{stopBot("Emergency stop: bot disconnected. Any already-open contract may continue until expiry.");disconnect()});$("liveMode").disabled=true;$("liveConfirm").disabled=true;$("modePill").textContent="DEMO ONLY · LOCKED";$("clearLog").addEventListener("click",()=>$("log").replaceChildren());window.addEventListener("beforeunload",()=>{if(botRunning)stopBot("Page closing.")});
 (async()=>{
-  
-  try{await loadDerivAccounts()}catch(error){$("derivAccount").innerHTML='<option value="">Unable to load accounts</option>';$("connectBtn").disabled=true;setMsg("connectMessage",error.message);log("Account loading failed: "+error.message)}
+  try{
+    const available=await loadDerivAccounts();
+    if(available){
+      setMsg("connectMessage","Demo account found. Connecting automatically…");
+      log("Demo account found. Starting secure automatic connection.");
+      await connect();
+    }
+  }catch(error){
+    $("derivAccount").innerHTML='<option value="">Unable to load accounts</option>';
+    $("connectBtn").disabled=true;
+    setMsg("connectMessage",error.message);
+    log("Automatic account connection failed: "+error.message);
+  }
 })();
