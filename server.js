@@ -187,7 +187,7 @@ app.post("/api/deriv/otp", express.json(), async (req, res) => {
     if (!selected) return res.status(404).json({ error: "The selected account was not found on this Deriv login." });
     const response = await fetch("https://api.derivws.com/trading/v1/options/accounts/" + encodeURIComponent(accountId) + "/otp", {
       method: "POST",
-      headers: derivHeaders()
+      headers: derivHeaders(session.accessToken)
     });
     const body = await response.json();
     if (!response.ok || !body.data?.url) {
