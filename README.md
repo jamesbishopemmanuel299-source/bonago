@@ -1,38 +1,28 @@
 # BONAGO — Deriv Auto Trader
 
-A browser-based, demo-first Deriv trading dashboard. It connects through Deriv's legacy WebSocket v3 API and can submit Rise/Fall CALL/PUT contracts when the included EMA crossover strategy signals.
+BONAGO is a browser-based trading dashboard hosted as a Node.js web service on Render.
 
-## Run
-Open `index.html` from a static web host (HTTPS recommended). The app uses no server and has no build step.
+## Render environment
 
-## Connect
-1. Create a Deriv application and enter its numeric App ID.
-2. Create an API token with **Read** and **Trade** permissions only.
-3. Paste the token into the password field and choose Demo mode.
-4. Connect, verify the account shown, configure stake/market/risk limits, then start.
+Configure these environment variables in the BONAGO Render service:
 
-The token is kept only in the active page memory and is not sent to BONAGO servers or saved to browser storage. Do not use a shared/public device. Disconnect when finished.
+- `DERIV_CLIENT_ID`: your Deriv registered OAuth 2.0 Client ID.
+- `DERIV_REDIRECT_URI`: `https://bonago-1.onrender.com/auth/deriv/callback` (must exactly match the redirect URL registered in your Deriv developer dashboard).
+- `SESSION_SECRET`: a long, random secret. Render can generate this automatically from `render.yaml`.
 
-## Strategy
-- One-minute candle close prices.
-- Fast/slow EMA crossover: fast crossing above slow triggers CALL; crossing below triggers PUT.
-- One open contract at a time; configurable contract duration and cooldown.
-- Session stops at the configured max trade count, loss limit, or profit target.
-- Stake is capped at 5% of the last balance returned by authorization.
+Do not commit OAuth credentials, access tokens, or session secrets to GitHub. The server reads these values from `process.env`.
 
-This is a simple example strategy, not a validated or profitable system. Backtest and paper-trade before considering live execution. A stop button prevents new trades; it cannot guarantee cancellation of an already purchased contract.
+## OAuth setup
 
-## Live mode
-Demo is the default. To use a real account, select Live mode, tick the explicit live-risk authorization checkbox, reconnect with a token authorized for the real account, review the account ID and balance, then press Start and confirm. Live trading can lose the entire stake on each contract.
+1. Register an OAuth 2.0 application with Deriv.
+2. Whitelist exactly `https://bonago-1.onrender.com/auth/deriv/callback`.
+3. Add the Client ID as `DERIV_CLIENT_ID` in Render.
+4. Deploy and open `https://bonago-1.onrender.com/auth/deriv` to begin the OAuth Authorization Code + PKCE flow.
 
-## Important limitations
-- The bot runs only while this browser tab remains open and connected. It is not a VPS/cloud 24/7 service.
-- No guaranteed profits, no martingale, and no automatic recovery after a disconnect.
-- Verify the current Deriv API requirements and your account's available contract types before use. Deriv's current documentation describes authenticated trading operations and contract proposals/buys.
+BONAGO exchanges the authorization code on the server and keeps the access token out of browser JavaScript. Deriv does not issue refresh tokens; users must authenticate again when the access token expires.
 
-## API
-- Deriv WebSocket v3: `wss://ws.derivws.com/websockets/v3?app_id=...`
-- Trading API docs: https://developers.deriv.com/docs/trading/
-- Workflow docs: https://developers.deriv.com/docs/workflows/
+## Important status
 
-BONAGO is experimental software, not financial advice. You are responsible for monitoring your account and trades.
+This commit adds the Render environment configuration and secure OAuth sign-in foundation. The existing trading screen still uses the older WebSocket v3 App ID + manually entered token flow; it is **not yet migrated** to the new authenticated Options API WebSocket OTP flow. Do not treat OAuth sign-in alone as proof that automated trading is connected. The next integration step is to load the authorized Deriv account, request its one-time WebSocket URL from the server, and update trading requests to the current API.
+
+Trading is high risk. Demo-test thoroughly; no strategy guarantees profit.
