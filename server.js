@@ -235,6 +235,17 @@ function groqFailure(status, body) {
   if (status >= 500) return { status: 503, code: "GROQ_UPSTREAM", message: "Groq is temporarily unavailable. No trade was placed.", ...detail };
   return { status: 503, code: "GROQ_REQUEST", message: "Groq rejected the request. See provider detail for the exact reason.", ...detail };
 }
+function parseGroqJson(content) {
+  if (typeof content !== 'string' || !content.trim()) throw Object.assign(new Error('Groq returned an empty response. No trade was placed.'), { publicCode: 'GROQ_EMPTY_OUTPUT' });
+  let cleaned = content.trim();
+  if (cleaned.startsWith('```')) cleaned = cleaned.replace(/^```[a-zA-Z]*\s*/, '').replace(/\s*```$/, '');
+  try { return JSON.parse(cleaned); }
+  catch {
+    const first = cleaned.indexOf('{'), last = cleaned.lastIndexOf('}');
+    if (first >= 0 && last > first) { try { return JSON.parse(cleaned.slice(first, last + 1)); } catch {} }
+    throw Object.assign(new Error('Groq returned invalid JSON. No trade was placed. Check the model response and retry.'), { publicCode: 'GROQ_INVALID_JSON' });
+  }
+}
 async function groqChat(payload) {
   if (!GROQ_API_KEY) throw Object.assign(new Error("Add GROQ_API_KEY to Render Environment, then redeploy."), { publicCode: "GROQ_KEY_MISSING" });
   let response;
@@ -290,8 +301,8 @@ app.post("/api/ai/analyze", express.json({limit:"32kb"}), async (req,res) => {
  const data=candles.map(c=>({open:Number(c.open),high:Number(c.high),low:Number(c.low),close:Number(c.close)}));
  if(data.some(c=>!Object.values(c).every(Number.isFinite)||c.high<c.low||c.high<Math.max(c.open,c.close)||c.low>Math.min(c.open,c.close))) return res.status(400).json({error:"Invalid candles."});
  try {
-  const b=await groqChat({model:GROQ_MODEL,reasoning_effort:"medium",temperature:0.1,max_completion_tokens:500,messages:[{role:"system",content:"Cautious technical analyst. Use only supplied OHLC candles. Never promise profit. Prefer HOLD if evidence is mixed or weak. CALL means up, PUT means down. Confidence 0-100 is only an estimate. Flag high volatility, conflicting momentum or insufficient evidence. Never advise bypassing risk controls."},{role:"user",content:"Analyse one-minute candles for "+symbol+", oldest to newest: "+JSON.stringify(data)}],response_format:{type:"json_schema",json_schema:{name:"bonago_decision",strict:true,schema:{type:"object",properties:{action:{type:"string",enum:["CALL","PUT","HOLD"]},confidence:{type:"integer"},rationale:{type:"string"},risk_flags:{type:"array",items:{type:"string"}}},required:["action","confidence","rationale","risk_flags"],additionalProperties:false}}}});
-  const d=JSON.parse(b.choices?.[0]?.message?.content||"{}");
+  const b=await groqChat({model:GROQ_MODEL,reasoning_effort:"medium",temperature:0.1,max_completion_tokens:500,messages:[{role:"system",content:"Return exactly one valid JSON object, with no Markdown or surrounding text. Required keys: action, confidence, rationale, risk_flags. Cautious technical analyst. Use only supplied OHLC candles. Never promise profit. Prefer HOLD if evidence is mixed or weak. CALL means up, PUT means down. Confidence 0-100 is only an estimate. Flag high volatility, conflicting momentum or insufficient evidence. Never advise bypassing risk controls."},{role:"user",content:"Analyse one-minute candles for "+symbol+", oldest to newest: "+JSON.stringify(data)}],response_format:{type:"json_object"}});
+  const d=parseGroqJson(b.choices?.[0]?.message?.content);
   if(!["CALL","PUT","HOLD"].includes(d.action)||!Number.isInteger(d.confidence)||d.confidence<0||d.confidence>100||typeof d.rationale!=="string"||!Array.isArray(d.risk_flags)) return res.status(502).json({error:"Invalid AI decision. No trade was placed.",code:"GROQ_INVALID_OUTPUT"});
   return res.json({...d,model:GROQ_MODEL,provider:"Groq"});
  } catch(e) { console.error("Groq analysis failed:", JSON.stringify({code:e.publicCode||"GROQ_FAILURE",providerStatus:e.providerStatus,providerCode:e.providerCode,providerMessage:e.providerMessage||e.message})); return res.status(503).json({error:e.message||"Groq unavailable; no trade placed.",code:e.publicCode||"GROQ_FAILURE",providerStatus:e.providerStatus,providerCode:e.providerCode,providerMessage:e.providerMessage}); }
@@ -304,7 +315,7 @@ app.post("/api/ai/command", express.json({limit:"8kb"}), async (req,res) => {
   try {
     const body=await groqChat({model:GROQ_MODEL,reasoning_effort:"medium",temperature:0.1,max_completion_tokens:500,
       messages:[
-        {role:"system",content:"You are BONAGO, a cautious Deriv Demo trading-command parser. Convert the user's command into settings only. Never promise profit. Never select live trading. Never invent market prices or claim to have analysed live candles. Set intent=start ONLY if the user explicitly commands starting/activating/automatically trading now. intent=stop for explicit stop commands. intent=analyze for analyse/check/forecast requests. Otherwise configure. Supported symbols: R_100, R_75, R_50, R_25, 1HZ100V. timeframe is one-minute candles only (60 seconds). duration_minutes allowed 1,3,5. Stake must be 0.35 to 100, max_trades 1 to 20, loss_limit and profit_target 0.01 to 1000. Use conservative defaults when omitted: R_75, stake 1, duration 1, max_trades 3, loss_limit 3, profit_target 2. Never override user values with larger risk. If unclear, use defaults and explain assumptions. Return only schema."},
+        {role:"system",content:"You are BONAGO, a cautious Deriv Demo trading-command parser. Return exactly one valid JSON object, with no Markdown or surrounding text. Required keys: intent, symbol, stake, duration_minutes, max_trades, loss_limit, profit_target, rationale. Convert the user's command into settings only. Never promise profit. Never select live trading. Never invent market prices or claim to have analysed live candles. Set intent=start ONLY if the user explicitly commands starting/activating/automatically trading now. intent=stop for explicit stop commands. intent=analyze for analyse/check/forecast requests. Otherwise configure. Supported symbols: R_100, R_75, R_50, R_25, 1HZ100V. timeframe is one-minute candles only (60 seconds). duration_minutes allowed 1,3,5. Stake must be 0.35 to 100, max_trades 1 to 20, loss_limit and profit_target 0.01 to 1000. Use conservative defaults when omitted: R_75, stake 1, duration 1, max_trades 3, loss_limit 3, profit_target 2. Never override user values with larger risk. If unclear, use defaults and explain assumptions. Return only schema."},
         {role:"user",content:command}
       ],
       response_format:{type:"json_schema",json_schema:{name:"bonago_command",strict:true,schema:{type:"object",properties:{
@@ -318,7 +329,7 @@ app.post("/api/ai/command", express.json({limit:"8kb"}), async (req,res) => {
         rationale:{type:"string"}
       },required:["intent","symbol","stake","duration_minutes","max_trades","loss_limit","profit_target","rationale"],additionalProperties:false}}}
     });
-    const parsed=JSON.parse(body.choices?.[0]?.message?.content||"{}");
+    const parsed=parseGroqJson(body.choices?.[0]?.message?.content);
     if(parsed.intent==="start" && !/\b(start|start trading|activate|enable|begin|trade automatically|turn on)\b/i.test(command)) parsed.intent="configure";
     if(parsed.intent==="stop" && !/\b(stop|halt|disable|turn off|emergency)\b/i.test(command)) parsed.intent="configure";
     if(!["configure","start","stop","analyze"].includes(parsed.intent)||!["R_100","R_75","R_50","R_25","1HZ100V"].includes(parsed.symbol)||![1,3,5].includes(parsed.duration_minutes)||!Number.isFinite(parsed.stake)||parsed.stake<0.35||parsed.stake>100||!Number.isInteger(parsed.max_trades)||parsed.max_trades<1||parsed.max_trades>20||!Number.isFinite(parsed.loss_limit)||parsed.loss_limit<=0||!Number.isFinite(parsed.profit_target)||parsed.profit_target<=0) return res.status(502).json({error:"The AI returned invalid settings. No changes were made.",code:"GROQ_INVALID_OUTPUT"});
