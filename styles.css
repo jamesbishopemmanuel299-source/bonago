@@ -375,3 +375,16 @@ footer{border-color:#263750}
 .position-detail-actions button:nth-child(2){border-color:#268d70;color:#7de0b9}
 .position-detail-actions .position-close{border-color:#bd5261;color:#ff9eaa}
 @media(max-width:520px){.position-detail-grid{gap:10px}.position-detail-actions button{font-size:9px;padding:0 4px}}
+
+.ai-levels-card{margin:14px 0;padding:15px;border:1px solid #2b4662;border-radius:13px;background:linear-gradient(145deg,#101e2e,#0b1420)}
+.ai-levels-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:13px;font-size:12px}
+.ai-levels-heading span{font-weight:800;color:#70c9ff}
+.ai-levels-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.ai-levels-grid>div{padding:10px 8px;background:#142437;border-radius:9px;min-width:0}
+.ai-levels-grid small,.ai-levels-grid b{display:block}
+.ai-levels-grid small{font-size:9px;color:#91a5bb;margin-bottom:7px}
+.ai-levels-grid b{font-size:12px;overflow-wrap:anywhere;color:#f2f6fb}
+.ai-levels-grid>div:nth-child(2) b{color:#ff8792}
+.ai-levels-grid>div:nth-child(3) b{color:#56d7a4}
+.ai-levels-card p{font-size:10px;line-height:1.5;color:#a9b9ca;margin:12px 0 0}
+@media(max-width:400px){.ai-levels-grid{gap:5px}.ai-levels-grid>div{padding:8px 5px}.ai-levels-grid small{font-size:8px}.ai-levels-grid b{font-size:10px}}
