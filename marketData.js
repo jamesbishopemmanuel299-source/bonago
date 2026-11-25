@@ -175,14 +175,14 @@
 
   // Live chart: independent public Deriv feed, never sends trade orders.
   const chartState={ws:null,symbol:"",granularity:60,points:[],subscription:null};
-  const chartCanvas=$("marketChart"),chartCtx=chartCanvas?.getContext("2d");
+  const chartCanvas=$("marketChart"),chartCtx=chartCanvas?.getContext("2d"),rsiCanvas=$("rsiChart"),rsiCtx=rsiCanvas?.getContext("2d");
   function chartStatus(t){const el=$("chartFeedStatus");if(el)el.textContent=t;}
   function drawChart(){
     if(!chartCanvas||!chartCtx)return;
     const rect=chartCanvas.getBoundingClientRect(),dpr=Math.max(1,window.devicePixelRatio||1),w=Math.max(1,rect.width),h=Math.max(1,rect.height);
     if(chartCanvas.width!==Math.round(w*dpr)||chartCanvas.height!==Math.round(h*dpr)){chartCanvas.width=Math.round(w*dpr);chartCanvas.height=Math.round(h*dpr);}
     chartCtx.setTransform(dpr,0,0,dpr,0,0);chartCtx.clearRect(0,0,w,h);
-    const pts=chartState.points;if(pts.length<2){chartCtx.fillStyle="#8796a9";chartCtx.font="12px sans-serif";chartCtx.fillText("Loading live Deriv candles…",14,h/2);return;}
+    const pts=chartState.points;if(pts.length<2){chartCtx.fillStyle="#8796a9";chartCtx.font="12px sans-serif";chartCtx.fillText("Loading live Deriv candles…",14,h/2);drawRsi();return;}
     const values=pts.flatMap(p=>[p.high,p.low,p.open,p.close]).filter(Number.isFinite),min=Math.min(...values),max=Math.max(...values),range=max-min||Math.max(Math.abs(max)*.0001,1),left=8,right=w-66,top=14,bottom=h-24;
     chartCtx.font="9px sans-serif";chartCtx.strokeStyle="#243243";chartCtx.fillStyle="#8796a9";chartCtx.lineWidth=1;
     for(let i=0;i<4;i++){const gy=top+(bottom-top)*i/3;chartCtx.beginPath();chartCtx.moveTo(left,gy);chartCtx.lineTo(right,gy);chartCtx.stroke();const v=max-(range*i/3);chartCtx.fillText(v.toFixed(Math.abs(v)<10?4:2),right+5,gy+3);}
@@ -191,9 +191,23 @@
     const last=pts[pts.length-1],py=y(last.close);chartCtx.setLineDash([4,4]);chartCtx.strokeStyle="#7da9ff";chartCtx.beginPath();chartCtx.moveTo(left,py);chartCtx.lineTo(right,py);chartCtx.stroke();chartCtx.setLineDash([]);
     const price=$("chartCurrentPrice");if(price)price.textContent=priceText(last.close,chartState.pip);
     const change=$("chartPriceChange");if(change){const first=pts[0].close,pct=first?((last.close-first)/first)*100:0;change.textContent=(pct>=0?"+":"")+pct.toFixed(2)+"% over visible candles";change.style.color=pct>=0?"#49d6a4":"#ff8297";}
-    const updated=$("chartLastUpdated");if(updated)updated.textContent="Updated "+new Date().toLocaleTimeString();
+    const updated=$("chartLastUpdated");if(updated)updated.textContent="Updated "+new Date().toLocaleTimeString();drawRsi();const stake=$("exchangeStakeValue");if(stake)stake.textContent=Number($("stake")?.value||1).toFixed(2);const currency=$("exchangeCurrency");if(currency)currency.textContent=window.BONAGO?.getState?.().authorized?.currency||"DEMO";const buy=$("exchangeBuy"),sell=$("exchangeSell");if(buy)buy.disabled=!window.BONAGO?.getState?.().authorized?.is_virtual;if(sell)sell.disabled=!window.BONAGO?.getState?.().authorized?.is_virtual;const bp=$("exchangeBuyPrice"),sp=$("exchangeSellPrice");if(bp)bp.textContent=priceText(last.close,chartState.pip);if(sp)sp.textContent=priceText(last.close,chartState.pip);
   }
-  function chartConnect(){
+
+  function drawRsi(){
+    if(!rsiCanvas||!rsiCtx)return;
+    const rect=rsiCanvas.getBoundingClientRect(),dpr=Math.max(1,window.devicePixelRatio||1),w=Math.max(1,rect.width),h=Math.max(1,rect.height);
+    if(rsiCanvas.width!==Math.round(w*dpr)||rsiCanvas.height!==Math.round(h*dpr)){rsiCanvas.width=Math.round(w*dpr);rsiCanvas.height=Math.round(h*dpr);}
+    rsiCtx.setTransform(dpr,0,0,dpr,0,0);rsiCtx.clearRect(0,0,w,h);
+    const closes=chartState.points.map(p=>p.close),period=14,values=[];
+    for(let i=period;i<closes.length;i++){let gains=0,losses=0;for(let j=i-period+1;j<=i;j++){const delta=closes[j]-closes[j-1];if(delta>0)gains+=delta;else losses-=delta;}const avgGain=gains/period,avgLoss=losses/period;values.push(avgLoss===0?100:100-(100/(1+avgGain/avgLoss)));}
+    const last=values[values.length-1],label=$("rsiValue");if(label)label.textContent=Number.isFinite(last)?last.toFixed(2):"—";
+    rsiCtx.font="9px sans-serif";rsiCtx.strokeStyle="#263342";rsiCtx.fillStyle="#8796a9";
+    [30,50,70].forEach(v=>{const y=h-(v/100)*h;rsiCtx.beginPath();rsiCtx.moveTo(0,y);rsiCtx.lineTo(w,y);rsiCtx.stroke();rsiCtx.fillText(String(v),w-22,y-2);});
+    if(values.length<2){rsiCtx.fillText("RSI(14) waiting for candles",8,h/2);return;}
+    rsiCtx.beginPath();values.forEach((v,i)=>{const x=8+(w-32)*i/Math.max(1,values.length-1),y=h-(v/100)*h;if(i===0)rsiCtx.moveTo(x,y);else rsiCtx.lineTo(x,y)});rsiCtx.strokeStyle="#9b70c9";rsiCtx.lineWidth=1.5;rsiCtx.stroke();
+  }
+\n  function chartConnect(){
     if(!chartCanvas)return;
     if(chartState.ws){try{chartState.ws.close()}catch{}}
     chartState.symbol=$("symbol")?.value||"R_100";chartState.points=[];chartState.subscription=null;
@@ -211,7 +225,7 @@
   }
   $("symbol")?.addEventListener("change",()=>{syncTickSubscriptions();chartConnect();});
   document.querySelectorAll("[data-chart-time]").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll("[data-chart-time]").forEach(x=>x.classList.toggle("selected",x===b));chartState.granularity=Number(b.dataset.chartTime);chartConnect();}));
-  window.addEventListener("resize",drawChart);
+  window.addEventListener("resize",()=>{drawChart();drawRsi()});
   setTimeout(chartConnect,1200);
 
   connect();
