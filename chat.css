@@ -16,3 +16,14 @@
 
 .bottom-nav{grid-template-columns:repeat(5,minmax(0,1fr))}
 @media(max-width:650px){.assistant-sidebar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:10px;border-right:0;border-bottom:1px solid #252d38}.assistant-brand,.assistant-new,.side-label,.side-status,.assistant-side-link{grid-column:1/-1}.assistant-brand{margin:0 0 3px}.assistant-new{padding:9px}.side-label{margin-top:3px}.side-stat{padding:8px}.side-stat b{font-size:15px}.assistant-main{min-height:0}.assistant-chat{min-height:36vh}}
+
+.chat-trade-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px 12px;align-items:end;padding:12px;margin:10px 0;border:1px solid #2c405b;border-radius:14px;background:linear-gradient(135deg,#12243a,#101923)}
+.chat-trade-toolbar label{display:grid;gap:6px;color:#a9bdd7;font-size:9px;font-weight:800;letter-spacing:.08em}
+.chat-trade-toolbar select{width:100%;min-width:0;min-height:42px;padding:8px 10px;border:1px solid #344b69;border-radius:9px;background:#0a1422;color:#f2f6ff;font-size:11px}
+.chat-trade-actions{display:flex;gap:7px}
+.chat-trade-actions button{min-height:42px;padding:0 13px;border-radius:10px;border:1px solid transparent;color:#fff;font-size:10px;font-weight:800;white-space:nowrap}
+.chat-trade-actions button:disabled{opacity:.4;filter:grayscale(1)}
+.chat-buy{background:linear-gradient(135deg,#16b98d,#087b68);border-color:#32d5ac!important}
+.chat-sell{background:linear-gradient(135deg,#e85e78,#a82e4b);border-color:#ff91a4!important}
+.chat-trade-status{grid-column:1/-1;color:#8fa4be;font-size:9px;line-height:1.4}
+@media(max-width:480px){.chat-trade-toolbar{grid-template-columns:1fr}.chat-trade-actions button{flex:1}.chat-trade-actions{width:100%}}
